@@ -1,6 +1,6 @@
 'use client';
 
-/* NOVA v006 — Dashboard principal: cerebro neuronal, CSV, push y PWA */
+/* NOVA v008 — Dashboard principal: auto-actualización de la PWA, cerebro neuronal, tienda por voz, CSV y push */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Hero, type OrbState } from '@/components/nova/Brain';
 import { AgentView } from '@/components/nova/AgentView';
@@ -11,7 +11,7 @@ import { SchedView } from '@/components/nova/SchedView';
 import { SettingsView } from '@/components/nova/SettingsView';
 import { ShopView } from '@/components/nova/ShopView';
 import { CoinAvatar, money, downloadCsv } from '@/components/nova/ui';
-import { SwRegister } from '@/components/nova/SwRegister';
+import { SwRegister, NOVA_VERSION } from '@/components/nova/SwRegister';
 import { Icon, type IconName } from '@/components/nova/Icon';
 
 type View = 'inicio' | 'agente' | 'tienda' | 'convos' | 'criptos' | 'metrics' | 'sched' | 'ajustes';
@@ -68,6 +68,18 @@ export default function NovaDashboard() {
 
   useEffect(() => { void loadStats(); const t = setInterval(() => void loadStats(), 60000); return () => clearInterval(t); }, [loadStats]);
 
+  /* v008 — si la PWA se auto-actualizó (el SW recargó la página), avisar con un toast */
+  useEffect(() => {
+    try {
+      const v = sessionStorage.getItem('nova:justUpdated');
+      if (v) {
+        sessionStorage.removeItem('nova:justUpdated');
+        setToast(`NOVA se actualizó a la ${v} ✓ — ya estás viendo la versión nueva.`);
+        setTimeout(() => setToast(''), 8000);
+      }
+    } catch { /* noop */ }
+  }, []);
+
   /* v006 — detector de escalados: si sube el contador, toast + notificación local */
   useEffect(() => {
     const check = async () => {
@@ -120,7 +132,7 @@ export default function NovaDashboard() {
           <header className="topbar">
             <div>
               <div className="time">{clock}</div>
-              <div className="date">{dateLine.charAt(0).toUpperCase() + dateLine.slice(1)} · NOVA v007</div>
+              <div className="date">{dateLine.charAt(0).toUpperCase() + dateLine.slice(1)} · NOVA {NOVA_VERSION}</div>
             </div>
             <div className="top-actions">
               <div className={`pill ${stats?.waMode === 'live' ? 'ok' : 'sim'}`}>
@@ -253,7 +265,7 @@ export default function NovaDashboard() {
           <div className="footerbrand">
             <div className="fbrand">
               <div className="orbmini" />
-              <div><b style={{ letterSpacing: 3 }}>NOVA</b><br />Agente WhatsApp + Cripto + Tienda · PWA v007</div>
+              <div><b style={{ letterSpacing: 3 }}>NOVA</b><br />Agente WhatsApp + Cripto + Tienda · PWA {NOVA_VERSION} · actualización automática</div>
             </div>
             <div className="muted">API oficial de Meta · gratis y sin riesgo</div>
           </div>

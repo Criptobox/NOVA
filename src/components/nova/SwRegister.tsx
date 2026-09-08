@@ -1,9 +1,13 @@
 'use client';
 
-/* NOVA v006 — Service Worker + instalación PWA + avisos push (Web Push VAPID).
-   El botón "Avisos" pide permiso, suscribe el navegador y guarda la
-   suscripción en el servidor: cuando alguien pide un humano, el motor
-   envía una notificación push real aunque el panel esté en segundo plano. */
+/* NOVA v008 — Service Worker + auto-actualización + instalación PWA + avisos push.
+   · Busca versiones nuevas del SW al abrir, al volver a la app y cada 30 min
+     (sin depender de navegaciones: funciona en la PWA instalada desde el icono).
+   · Cuando una versión nueva toma el control (skipWaiting en sw.js), recarga la
+     página UNA sola vez → los cambios se aplican solos, sin refresco manual.
+   · El botón "Avisos" pide permiso, suscribe el navegador y guarda la
+     suscripción en el servidor: cuando alguien pide un humano, el motor
+     envía una notificación push real aunque el panel esté en segundo plano. */
 import { useCallback, useEffect, useState } from 'react';
 import { Icon } from './Icon';
 
@@ -91,21 +95,52 @@ export function PushBell({ compact = false }: { compact?: boolean }) {
   );
 }
 
+export const NOVA_VERSION = 'v008';
+
 export function SwRegister() {
   const [canInstall, setCanInstall] = useState(false);
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => { /* silencioso */ });
-    }
+    if (!('serviceWorker' in navigator)) return;
+    const sw = navigator.serviceWorker;
+
+    /* v008 — cuando una versión NUEVA del SW toma el control, recargar una sola vez.
+       En la primera visita (sin controller previo) no se recarga. */
+    try { sessionStorage.removeItem('nova:reload'); } catch { /* noop */ }
+    let hadController = !!sw.controller;
+    const onCtrl = () => {
+      if (!hadController) { hadController = true; return; }
+      try {
+        if (sessionStorage.getItem('nova:reload') === '1') return;
+        sessionStorage.setItem('nova:reload', '1');
+        sessionStorage.setItem('nova:justUpdated', NOVA_VERSION);
+      } catch { /* noop */ }
+      window.location.reload();
+    };
+    sw.addEventListener('controllerchange', onCtrl);
+
+    let cleanup: (() => void) | undefined;
+    sw.register('/sw.js').then((reg) => {
+      const tick = () => { reg.update().catch(() => { /* silencioso */ }); };
+      void tick();
+      const iv = setInterval(tick, 30 * 60 * 1000);
+      const onVis = () => { if (document.visibilityState === 'visible') tick(); };
+      document.addEventListener('visibilitychange', onVis);
+      cleanup = () => { clearInterval(iv); document.removeEventListener('visibilitychange', onVis); };
+    }).catch(() => { /* silencioso */ });
+
     const onPrompt = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
       setCanInstall(true);
     };
     window.addEventListener('beforeinstallprompt', onPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', onPrompt);
+    return () => {
+      sw.removeEventListener('controllerchange', onCtrl);
+      window.removeEventListener('beforeinstallprompt', onPrompt);
+      cleanup?.();
+    };
   }, []);
 
   return (

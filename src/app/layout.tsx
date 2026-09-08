@@ -2,14 +2,14 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
-/* v007 — Tipografías: Inter (texto) + Space Grotesk (títulos/números) */
+/* v008 — Tipografías: Inter (texto) + Space Grotesk (títulos/números) */
 const inter = Inter({ subsets: ["latin"], variable: "--font-body", display: "swap" });
 const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-display", display: "swap" });
 
 export const metadata: Metadata = {
   title: "NOVA — Agente WhatsApp + Cripto",
   description:
-    "NOVA v007: agente inteligente para WhatsApp (API oficial, gratis y sin riesgo) con cripto en datos reales, cerebro neuronal en vivo, exportación CSV, avisos push al pedir un humano, alertas, recordatorios, divisas y dashboard PWA con modo teléfono claro.",
+    "NOVA v008: agente inteligente para WhatsApp (API oficial, gratis y sin riesgo) con cripto en datos reales, control por voz de tu tienda (eliminar stock, reponer, ventas), cerebro neuronal en vivo, exportación CSV, avisos push al pedir un humano y dashboard PWA con actualización automática.",
   applicationName: "NOVA",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
