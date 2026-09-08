@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>NOVA — Agente Personal de Voz</title>
+<meta name="description" content="NOVA: tu agente personal de voz. Conversación natural, memoria, calendario, tareas, automatizaciones y gestión de tu tienda. Funciona offline e instalable.">
+<meta name="theme-color" content="#030711">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NOVA">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-theme="minimal">
+<div class="app">
+<aside class="sidebar">
+  <div class="brand"><i></i><span>NOVA</span></div>
+  <nav class="nav" id="nav">
+    <button class="active" data-view="inicio"><span>⌂</span><label>Inicio</label></button>
+    <button data-view="conversacion"><span>◉</span><label>Conversación</label></button>
+    <button data-view="memoria"><span>◈</span><label>Memoria</label></button>
+    <button data-view="calendario"><span>▣</span><label>Calendario</label></button>
+    <button data-view="tareas"><span>✓</span><label>Tareas</label></button>
+    <button data-view="automatizaciones"><span>↻</span><label>Automatizaciones</label></button>
+    <button data-view="archivos"><span>□</span><label>Archivos</label></button>
+    <button data-view="tiendamax"><span>◆</span><label>Tiendamax</label></button>
+    <button data-view="criptos"><span>◇</span><label>Criptos</label></button>
+    <button data-view="navegador"><span>⌕</span><label>Navegador</label></button>
+    <button data-view="plugins"><span>⊕</span><label>Plugins</label></button>
+  </nav>
+  <div class="profile"><div class="avatar"></div><div class="meta"><b>Usuario</b><small>Premium</small></div><span style="margin-left:auto">›</span></div>
+</aside>
+
+<main>
+<header class="topbar">
+  <div><div class="time" id="clock">--:--</div><div class="date" id="dateLine">NOVA está lista</div></div>
+  <div class="top-actions">
+    <div class="pill">☀️ <b>24°C</b> · Soleado <span class="muted">(demo)</span></div>
+    <span class="badge-off" id="offlineBadge">◌ Sin conexión — modo offline</span>
+    <button class="iconbtn install" id="installBtn" hidden>⬇ Instalar app</button>
+    <button class="iconbtn" id="voiceBtn">🎙 Activar voz</button>
+    <button class="iconbtn" id="settingsBtn" aria-label="Configuración">⚙</button>
+  </div>
+</header>
+
+<!-- ================= VISTA: INICIO ================= -->
+<section class="view active" id="view-inicio">
+  <div class="grid">
+    <article class="card hero">
+      <div class="hero-inner">
+        <div class="orb-stage">
+          <button class="orb" id="orb" aria-label="Esfera NOVA — toca para hablar">
+            <span class="orb-aurora"></span>
+            <span class="orb-swirl"></span>
+            <span class="core"></span>
+            <span class="orb-shine"></span>
+            <span class="orb-dot d1"></span><span class="orb-dot d2"></span><span class="orb-dot d3"></span><span class="orb-dot d4"></span>
+            <span class="orb-orbit o1"><i></i></span>
+            <span class="orb-orbit o2"><i></i></span>
+            <span class="orb-pulse"></span>
+          </button>
+        </div>
+        <div class="state"><strong id="stateText">En espera</strong><p id="stateSub">Di “Nova” o toca la esfera para activar tu agente personal.</p></div>
+        <div class="wake">⌁ Wake Word · <b>“Nova”</b> · escucha local</div>
+      </div>
+      <div class="hero-footer"><div class="mini">Memoria activa</div><div class="mini">Privacidad protegida</div><div class="mini">Voz natural</div><div class="mini">Acciones autorizadas</div></div>
+    </article>
+
+    <article class="card">
+      <div class="cardhead"><h3>Resumen del día</h3><span class="muted">HOY</span></div>
+      <div class="stats">
+        <div class="stat"><label>Reuniones hoy</label><strong id="statMeetings">0</strong></div>
+        <div class="stat"><label>Tareas pendientes</label><strong id="statTasks">0</strong></div>
+        <div class="stat"><label>Pedidos</label><strong id="statOrders">42</strong></div>
+        <div class="stat"><label>Ventas</label><strong class="up">+18%</strong></div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="cardhead"><h3>Ventas de hoy</h3><span class="up">↑ 18.4%</span></div>
+      <div class="panelbody"><div style="font-size:25px;font-weight:800" id="salesToday">$4,280</div><div class="muted">vs. $3,616 ayer · <span id="salesOrders">42</span> pedidos</div></div>
+      <div class="chart"><svg viewBox="0 0 400 100" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4bdcff" stop-opacity=".25"/><stop offset="1" stop-color="#4bdcff" stop-opacity="0"/></linearGradient></defs><path class="area" d="M0 80 L45 65 L80 71 L120 44 L155 55 L195 34 L230 47 L270 26 L305 37 L345 18 L400 7 L400 100 L0 100Z"/><path class="spark" d="M0 80 L45 65 L80 71 L120 44 L155 55 L195 34 L230 47 L270 26 L305 37 L345 18 L400 7"/></svg></div>
+    </article>
+
+    <article class="card">
+      <div class="cardhead"><h3>Cripto · Mi portafolio</h3><span class="muted" id="cryptoTag">CARGANDO…</span></div>
+      <div class="panelbody">
+        <div style="font-size:25px;font-weight:800" id="cryptoTotal">$—</div>
+        <div class="muted" id="cryptoSub">Consultando precios…</div>
+        <div id="cryptoHomeRows" style="margin-top:8px"></div>
+        <button class="button" style="width:100%;margin-top:10px" data-goto="criptos">Abrir seguimiento cripto</button>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="cardhead"><h3>Estados de la esfera</h3><span class="muted" id="statesTag">6 estados</span></div>
+      <div class="states" id="statesGrid">
+        <div class="statebox" data-state="standby"><b>01 · Standby</b><div class="smallorb"></div><p>Esfera mínima, siempre disponible.</p></div>
+        <div class="statebox" data-state="detectando"><b>02 · Detectando</b><div class="smallorb"></div><p>Reconoce el comando de voz.</p></div>
+        <div class="statebox" data-state="escuchando"><b>03 · Escuchando</b><div class="smallorb"></div><p>Captura tu voz en tiempo real.</p></div>
+        <div class="statebox" data-state="pensando"><b>04 · Pensando</b><div class="smallorb"></div><p>Analiza contexto y herramientas.</p></div>
+        <div class="statebox" data-state="hablando"><b>05 · Hablando</b><div class="smallorb"></div><p>Responde con voz natural.</p></div>
+        <div class="statebox" data-state="ejecutando"><b>06 · Ejecutando</b><div class="smallorb"></div><p>Realiza acciones y muestra progreso.</p></div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="cardhead"><h3>Productos más vendidos</h3><span class="muted">7 DÍAS</span></div>
+      <div class="list">
+        <div class="row"><div class="thumb">⌚</div><div class="grow"><b>Smart Watch Pro</b><small>12 unidades</small></div><span class="tag">TOP 1</span></div>
+        <div class="row"><div class="thumb">🎧</div><div class="grow"><b>Audífonos Bluetooth</b><small>9 unidades</small></div><span class="tag">TOP 2</span></div>
+        <div class="row"><div class="thumb">🔋</div><div class="grow"><b>Power Bank</b><small>8 unidades</small></div><span class="tag">TOP 3</span></div>
+        <div class="row"><div class="thumb">📱</div><div class="grow"><b>Funda Premium</b><small>7 unidades</small></div><span class="tag yellow">STOCK 7</span></div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="cardhead"><h3>Inventario bajo</h3><span class="muted" id="lowStockTag">4 ALERTAS</span></div>
+      <div class="list" id="lowStockList">
+        <div class="row"><div class="thumb">🎧</div><div class="grow"><b>Audífonos Bluetooth</b><small>SKU · AB-204</small></div><span class="tag red">3 uds.</span></div>
+        <div class="row"><div class="thumb">🔌</div><div class="grow"><b>Cargador Rápido</b><small>SKU · CR-110</small></div><span class="tag red">5 uds.</span></div>
+        <div class="row"><div class="thumb">📱</div><div class="grow"><b>Funda Premium</b><small>SKU · FP-88</small></div><span class="tag yellow">7 uds.</span></div>
+        <button class="button" style="margin-top:8px;width:100%" data-goto="tiendamax">Ver inventario completo</button>
+      </div>
+    </article>
+
+    <article class="card wide">
+      <div class="cardhead"><h3>Centro operativo de NOVA</h3><span class="muted">AGENTE MULTIMODAL</span></div>
+      <div class="columns">
+        <div class="card">
+          <div class="cardhead"><h3>Conversación por voz</h3><span>● EN VIVO</span></div>
+          <div class="conversation" id="miniChat"></div>
+          <div style="padding:0 12px 12px"><button class="button" style="width:100%" data-goto="conversacion">Abrir conversación completa</button></div>
+        </div>
+        <div class="card">
+          <div class="cardhead"><h3>Tiendamax · Gestión</h3><span class="muted">EN LÍNEA</span></div>
+          <div class="tiles">
+            <div class="tile" data-goto="tiendamax">📦 Pedidos<span id="tileOrders">42 hoy</span></div>
+            <div class="tile" data-goto="tiendamax">💰 Ventas<span>$4,280</span></div>
+            <div class="tile" data-goto="tiendamax">👥 Clientes<span>31 nuevos</span></div>
+            <div class="tile" data-goto="tiendamax">⚠ Inventario<span id="tileAlerts">4 alertas</span></div>
+            <div class="tile" data-goto="tiendamax">✦ Generar descripción IA<span>Foto → ficha</span></div>
+            <div class="tile" data-goto="tiendamax">＋ Crear producto<span>Asistido</span></div>
+            <div class="tile" data-goto="tiendamax">▣ Gestionar inventario<span>Acción rápida</span></div>
+            <div class="tile" data-goto="tiendamax">⌁ Ver reportes<span>Analítica</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cardhead"><h3>Automatizaciones</h3><span class="muted" id="routinesTag">4 ACTIVAS</span></div>
+          <div class="routines" id="miniRoutines"></div>
+          <div style="padding:10px"><button class="button" style="width:100%" data-goto="automatizaciones">+ Crear nueva rutina</button></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="cardhead"><h3>Calendario y recordatorios</h3><span class="muted" id="calMonthTag">—</span></div>
+      <div class="calendar" id="miniCalendar"></div>
+    </article>
+
+    <article class="card">
+      <div class="cardhead"><h3>Multimodal</h3><span class="muted">CÁMARA · ARCHIVOS</span></div>
+      <div class="panelbody">
+        <div class="row"><div class="thumb">📷</div><div class="grow"><b>Analizar imagen</b><small>Categorizar · describir · colores</small></div><button class="button" data-goto="archivos">Abrir</button></div>
+        <div class="row"><div class="thumb">📄</div><div class="grow"><b>Documento</b><small>Resumen automático local</small></div><button class="button" data-goto="archivos">Abrir</button></div>
+        <div class="row"><div class="thumb">⌨</div><div class="grow"><b>Pantalla</b><small>Próximamente v002</small></div><span class="tag blue">PRONTO</span></div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="cardhead"><h3>Memoria personal</h3><span class="up">ACTIVA</span></div>
+      <div class="panelbody">
+        <div class="metric"><span>Preferencias</span><b id="memBar1T">92%</b></div><div class="bar"><i id="memBar1" style="width:92%"></i></div>
+        <div class="metric"><span>Contexto de proyectos</span><b>86%</b></div><div class="bar"><i style="width:86%"></i></div>
+        <div class="metric"><span>Rutinas aprendidas</span><b>74%</b></div><div class="bar"><i style="width:74%"></i></div>
+        <div class="metric"><span>Recuerdos guardados</span><b id="memCount">0</b></div>
+        <button class="button" style="width:100%;margin-top:10px" data-goto="memoria">Administrar memoria</button>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="cardhead"><h3>Permisos y seguridad</h3><span class="muted">CONTROL TOTAL</span></div>
+      <div class="panelbody">
+        <div class="metric"><span>🟢 Automático</span><b>Lectura / consultas</b></div>
+        <div class="metric"><span>🟡 Confirmación</span><b>Acciones normales</b></div>
+        <div class="metric"><span>🔴 Siempre confirmar</span><b>Acciones sensibles</b></div>
+        <div class="metric"><span>Procesamiento local de voz</span><span class="switch" data-switch="priv_localVoice"></span></div>
+        <div class="metric"><span>Notificaciones push</span><span class="switch" data-switch="priv_push"></span></div>
+        <div class="metric"><span>Encriptación de memoria</span><span class="switch" data-switch="priv_encrypt"></span></div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="cardhead"><h3>Voz y personalidad</h3><span class="muted">CONFIGURACIÓN</span></div>
+      <div class="panelbody">
+        <div class="row"><div class="thumb">🎙</div><div class="grow"><b id="voiceName">Voz: Nova</b><small id="voiceDesc">Natural · cálida · rápida</small></div><span class="tag">ACTIVA</span></div>
+        <div class="row"><div class="thumb">✦</div><div class="grow"><b id="personaName">Personalidad: Profesional</b><small id="personaDesc">Directa · analítica · estratégica</small></div></div>
+        <div class="row"><div class="thumb">🌐</div><div class="grow"><b>Idioma</b><small>Español · reconocimiento es-ES/es-MX</small></div></div>
+        <button class="button" style="width:100%;margin-top:7px" id="testVoiceBtn">Probar voz</button>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="cardhead"><h3>Apariencia y temas</h3><span class="muted">ESFERA</span></div>
+      <div class="panelbody"><div class="themegrid" id="themeGrid"></div></div>
+    </article>
+
+    <article class="card wide">
+      <div class="cardhead"><h3>Arquitectura del sistema</h3><span class="muted">VISIÓN COMPLETA</span></div>
+      <div class="arch">
+        <div><div class="node">🎙<strong>Micrófono</strong>Web Speech API</div><div style="height:8px"></div><div class="node">⌁<strong>Wake Word</strong>Modo experimental</div><div style="height:8px"></div><div class="node">◌<strong>Speech to Text</strong>Transcripción</div></div>
+        <div><div class="arrow">↓</div><div class="coreNode"><div><strong>AGENTE IA</strong><div class="muted" style="margin-top:4px">Contexto · memoria · planificación</div></div></div><div class="arrow">↓</div></div>
+        <div><div class="node">🧠<strong>Memoria</strong>localStorage cifrable</div><div style="height:8px"></div><div class="node">⚡<strong>Herramientas</strong>Archivos · navegador</div><div style="height:8px"></div><div class="node">🛍<strong>Apps / Tienda</strong>Acciones autorizadas</div></div>
+      </div>
+    </article>
+
+    <article class="card wide">
+      <div class="cardhead"><h3>Flujo completo de la experiencia</h3><span class="muted">NOVA VOICE LOOP</span></div>
+      <div class="flow">
+        <div class="step"><strong>01 · Standby</strong>Espera de forma segura.<br><em>Siempre lista</em></div><div class="chev">→</div>
+        <div class="step"><strong>02 · “Nova”</strong>Detecta la palabra de activación.<br><em>Wake Word</em></div><div class="chev">→</div>
+        <div class="step"><strong>03 · Despierta</strong>La esfera aparece y responde.<br><em>“Sí, dime.”</em></div><div class="chev">→</div>
+        <div class="step"><strong>04 · Escucha</strong>Captura tu voz y contexto.<br><em>Tiempo real</em></div><div class="chev">→</div>
+        <div class="step"><strong>05 · Decide</strong>Consulta memoria y herramientas.<br><em>Agente IA</em></div><div class="chev">→</div>
+        <div class="step"><strong>06 · Ejecuta</strong>Hace la acción autorizada.<br><em>Progreso visible</em></div><div class="chev">→</div>
+        <div class="step"><strong>07 · Responde</strong>Voz + interfaz visual.<br><em>Natural</em></div><div class="chev">→</div>
+        <div class="step"><strong>08 · Standby</strong>Vuelve a reposo.<br><em>Privacidad</em></div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ================= VISTA: CONVERSACIÓN ================= -->
+<section class="view" id="view-conversacion">
+  <div class="viewhead"><h2>Conversación</h2><p>Habla con NOVA por voz o texto. Prueba: “¿cómo van las ventas?”, “abre tareas”, “agrega tarea comprar café”.</p></div>
+  <article class="card">
+    <div class="cardhead"><h3>Chat con NOVA</h3><span class="muted" id="engineTag">motor local</span></div>
+    <div class="chatwrap">
+      <div class="chatlog" id="chatLog"></div>
+      <div class="chips">
+        <button class="chip" data-say="¿Cómo van las ventas de hoy?">💰 Ventas</button>
+        <button class="chip" data-say="¿Qué tareas tengo pendientes?">✓ Tareas</button>
+        <button class="chip" data-say="¿Qué tengo hoy en la agenda?">▣ Agenda</button>
+        <button class="chip" data-say="Abre la calculadora">🧮 Abrir…</button>
+        <button class="chip" data-say="Cuéntame un chiste">😄 Chiste</button>
+        <button class="chip" data-say="¿Cómo van mis criptos?">🪙 Criptos</button>
+      </div>
+      <div class="voicebar off" id="bigVoicebar" aria-hidden="true"></div>
+      <div class="chatinput">
+        <button class="micbtn" id="micBtn" aria-label="Hablar">🎙</button>
+        <input id="chatInput" type="text" placeholder="Escribe o di “Nova” + tu comando…" autocomplete="off">
+        <button class="sendbtn" id="sendBtn">Enviar</button>
+      </div>
+    </div>
+  </article>
+</section>
+
+<!-- ================= VISTAS DINÁMICAS ================= -->
+<section class="view" id="view-memoria"></section>
+<section class="view" id="view-calendario"></section>
+<section class="view" id="view-tareas"></section>
+<section class="view" id="view-automatizaciones"></section>
+<section class="view" id="view-archivos"></section>
+<section class="view" id="view-tiendamax"></section>
+<section class="view" id="view-criptos"></section>
+<section class="view" id="view-navegador"></section>
+<section class="view" id="view-plugins"></section>
+
+<div class="footerbrand"><div class="orbmini"></div><div><b style="color:#fff;letter-spacing:3px">NOVA</b><br>Más que un asistente, es tu aliado. · PWA v002</div></div>
+</main>
+</div>
+
+<!-- ================= MODAL AJUSTES ================= -->
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modalbox">
+    <button class="close" id="close" aria-label="Cerrar">×</button>
+    <h2 id="modalTitle">Configuración de NOVA</h2>
+    <p>Controla la experiencia, privacidad, voz y comportamiento del agente. Todo se guarda en tu dispositivo.</p>
+    <div class="settings">
+      <div class="setting"><label>Wake Word</label><input type="text" id="setWake" value="nova" maxlength="20" style="width:100%;background:rgba(6,17,32,.85);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:7px;font-size:12px"></div>
+      <div class="setting"><label>Modo Wake Word (experimental)</label><b id="setWakeMode">Desactivado</b></div>
+      <div class="setting"><label>Voz del sistema</label><select id="setVoice"><option value="">Automática (español)</option></select></div>
+      <div class="setting"><label>Velocidad <span id="setRateV">1.0</span></label><input type="range" id="setRate" min="0.6" max="1.6" step="0.1" value="1"></div>
+      <div class="setting"><label>Personalidad</label><select id="setPersona"><option value="profesional">Profesional · directa</option><option value="casual">Casual · cercana</option><option value="creativa">Creativa · inspiradora</option><option value="tecnica">Técnica · precisa</option></select></div>
+      <div class="setting"><label>Confirmar acciones sensibles</label><b id="setConfirm">Sí (recomendado)</b></div>
+      <div class="setting"><label>Tema</label><select id="setTheme"><option value="minimal">Minimal</option><option value="glass">Glass</option><option value="holographic">Holographic</option><option value="darkluxury">Dark Luxury</option><option value="aurora">Aurora</option><option value="crystal">Crystal</option></select></div>
+      <div class="setting"><label>Notificaciones de prueba</label><button class="button" id="notifyTest">🔔 Enviar notificación</button></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+      <button class="button" id="exportData">⬇ Exportar mis datos</button>
+      <button class="button danger" id="resetData">⟲ Borrar todos los datos</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="updatebar" id="updateBar"><span>✦ Nueva versión de NOVA disponible</span><button class="button green" id="updateBtn">Actualizar</button><button class="button" id="updateDismiss">Luego</button></div>
+
+<script src="app.js"></script>
+<script src="views.js"></script>
+<script src="crypto.js"></script>
+</body>
+</html>
