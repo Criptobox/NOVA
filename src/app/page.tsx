@@ -9,15 +9,17 @@ import { ConvosView } from '@/components/nova/ConvosView';
 import { MetricsView } from '@/components/nova/MetricsView';
 import { SchedView } from '@/components/nova/SchedView';
 import { SettingsView } from '@/components/nova/SettingsView';
+import { ShopView } from '@/components/nova/ShopView';
 import { CoinAvatar, money, downloadCsv } from '@/components/nova/ui';
 import { SwRegister } from '@/components/nova/SwRegister';
 import { Icon, type IconName } from '@/components/nova/Icon';
 
-type View = 'inicio' | 'agente' | 'convos' | 'criptos' | 'metrics' | 'sched' | 'ajustes';
+type View = 'inicio' | 'agente' | 'tienda' | 'convos' | 'criptos' | 'metrics' | 'sched' | 'ajustes';
 
 const NAV: { id: View; icon: IconName; label: string }[] = [
   { id: 'inicio', icon: 'home', label: 'Inicio' },
   { id: 'agente', icon: 'brain', label: 'Agente' },
+  { id: 'tienda', icon: 'box', label: 'Tienda' },
   { id: 'convos', icon: 'chat', label: 'Conversaciones' },
   { id: 'criptos', icon: 'coins', label: 'Criptos' },
   { id: 'metrics', icon: 'chart', label: 'Métricas' },
@@ -29,6 +31,7 @@ interface Stats {
   contacts: number; msgs24h: number; alertsActive: number; jobsOn: number;
   portfolioTotal: number; waMode: string; scheduler: { running: boolean };
   cryptoLive: boolean; withinHours: boolean;
+  shopCount: number; shopUnidades: number; shopBajos: number; shopAgotados: number;
 }
 interface HomeRow { id: string; sym: string; name: string; price: number; chg: number }
 
@@ -117,7 +120,7 @@ export default function NovaDashboard() {
           <header className="topbar">
             <div>
               <div className="time">{clock}</div>
-              <div className="date">{dateLine.charAt(0).toUpperCase() + dateLine.slice(1)} · NOVA v006</div>
+              <div className="date">{dateLine.charAt(0).toUpperCase() + dateLine.slice(1)} · NOVA v007</div>
             </div>
             <div className="top-actions">
               <div className={`pill ${stats?.waMode === 'live' ? 'ok' : 'sim'}`}>
@@ -143,6 +146,7 @@ export default function NovaDashboard() {
                     <div className="mini">Imágenes IA</div>
                     <div className="mini">Divisas</div>
                     <div className="mini">Botones WA</div>
+                    <div className="mini">Tienda por voz</div>
                   </div>
                 </article>
 
@@ -153,6 +157,19 @@ export default function NovaDashboard() {
                     <div className="stat"><label>Mensajes 24 h</label><strong>{stats?.msgs24h ?? '—'}</strong></div>
                     <div className="stat"><label>Alertas vivas</label><strong>{stats?.alertsActive ?? '—'}</strong></div>
                     <div className="stat"><label>Programados</label><strong>{stats?.jobsOn ?? '—'}</strong></div>
+                  </div>
+                </article>
+
+                <article className="card">
+                  <div className="cardhead"><h3>Tienda · TiendaMax</h3><span className="muted">TIENDAMAX.ORG</span></div>
+                  <div className="panelbody">
+                    <div className="stats">
+                      <div className="stat"><label>Productos</label><strong>{stats?.shopCount ?? '—'}</strong></div>
+                      <div className="stat"><label>Unidades</label><strong>{stats?.shopUnidades ?? '—'}</strong></div>
+                      <div className="stat"><label>Stock bajo</label><strong>{stats?.shopBajos ?? '—'}</strong></div>
+                      <div className="stat"><label>Agotados</label><strong>{stats?.shopAgotados ?? '—'}</strong></div>
+                    </div>
+                    <button className="button" style={{ width: '100%', marginTop: 10 }} onClick={() => setView('tienda')}>Gestionar inventario por voz</button>
                   </div>
                 </article>
 
@@ -206,6 +223,7 @@ export default function NovaDashboard() {
                   <div className="panelbody">
                     <div className="row"><div className="thumb">🪙</div><div className="grow"><b>&quot;precio btc&quot;</b><small>Cotización real al instante</small></div><button className="button" onClick={() => setView('agente')}>Probar</button></div>
                     <div className="row"><div className="thumb">⏰</div><div className="grow"><b>&quot;alerta eth &gt;= 4000&quot;</b><small>Aviso por WhatsApp al cruzar</small></div><button className="button" onClick={() => setView('agente')}>Probar</button></div>
+                    <div className="row"><div className="thumb">📦</div><div className="grow"><b>"stock bajo"</b><small>Existencias reales de tiendamax.org</small></div><button className="button" onClick={() => setView('tienda')}>Abrir tienda</button></div>
                     <div className="row"><div className="thumb">🎤</div><div className="grow"><b>Nota de voz</b><small>Transcripción con IA</small></div><button className="button" onClick={() => setView('agente')}>Probar</button></div>
                     <div className="row"><div className="thumb">💱</div><div className="grow"><b>&quot;100 usd a mxn&quot;</b><small>Conversor de divisas en vivo</small></div><button className="button" onClick={() => setView('agente')}>Probar</button></div>
                     <div className="row"><div className="thumb">🔘</div><div className="grow"><b>Menú con botones</b><small>Escribe &quot;hola&quot; y NOVA despliega opciones</small></div><button className="button" onClick={() => setView('agente')}>Probar</button></div>
@@ -225,6 +243,7 @@ export default function NovaDashboard() {
           )}
 
           {view === 'agente' && <AgentView onState={setOrb} />}
+          {view === 'tienda' && <ShopView />}
           {view === 'convos' && <ConvosView />}
           {view === 'criptos' && <CriptoView />}
           {view === 'metrics' && <MetricsView />}
@@ -234,7 +253,7 @@ export default function NovaDashboard() {
           <div className="footerbrand">
             <div className="fbrand">
               <div className="orbmini" />
-              <div><b style={{ letterSpacing: 3 }}>NOVA</b><br />Agente WhatsApp + Cripto · PWA v006</div>
+              <div><b style={{ letterSpacing: 3 }}>NOVA</b><br />Agente WhatsApp + Cripto + Tienda · PWA v007</div>
             </div>
             <div className="muted">API oficial de Meta · gratis y sin riesgo</div>
           </div>

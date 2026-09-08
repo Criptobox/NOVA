@@ -10,6 +10,8 @@ interface Settings {
   maxMsgsPerMin: number; ownerWa: string; aiEnabled: boolean;
   dailySummaryOn: boolean; dailySummaryHour: number;
   waToken: string; waPhoneId: string; waVerifyToken: string;
+  ghUser: string; ghRepo: string; ghBranch: string; ghPath: string; ghSite: string; ghToken: string;
+  shopSim: boolean; lowStock: number;
 }
 interface Status {
   mode: string; tokenSet: boolean; phoneIdSet: boolean; verifyToken: string;
@@ -21,6 +23,8 @@ export function SettingsView() {
   const [st, setSt] = useState<Status | null>(null);
   const [saved, setSaved] = useState('');
   const [origin, setOrigin] = useState('');
+  const [ghTest, setGhTest] = useState<{ ok: boolean; message: string } | null>(null);
+  const [ghTesting, setGhTesting] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -38,6 +42,17 @@ export function SettingsView() {
     setSaved('Ajustes guardados ✓');
     setTimeout(() => setSaved(''), 2500);
     void load();
+  };
+
+  const testGh = async () => {
+    setGhTesting(true); setGhTest(null);
+    try {
+      const r = await fetch('/api/shop/test', { method: 'POST' });
+      const d = await r.json();
+      setGhTest({ ok: !!d.ok && d.push !== false, message: d.message || 'Sin respuesta' });
+    } catch {
+      setGhTest({ ok: false, message: 'Sin conexión con el servidor' });
+    } finally { setGhTesting(false); }
   };
 
   if (!s) return <div className="empty">Cargando ajustes…</div>;
@@ -82,6 +97,41 @@ export function SettingsView() {
       </article>
 
       <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', marginTop: 12 }}>
+        <article className="card">
+          <div className="cardhead">
+            <h3>Conexión tienda (GitHub · TiendaMax)</h3>
+            {s.shopSim ? <span className="tag yellow">● SIMULACIÓN</span> : s.ghToken ? <span className="tag">● EN VIVO</span> : <span className="tag yellow">● SOLO LECTURA</span>}
+          </div>
+          <div className="panelbody">
+            <p className="muted" style={{ margin: '0 0 10px', lineHeight: 1.6 }}>
+              Tu tienda guarda el catálogo en <code style={{ color: '#5bdcff' }}>productos.json</code> dentro de un repo de GitHub Pages. NOVA escribe ahí con el mismo mecanismo que tu panel admin: si pegas el token, cada «reponer», «elimina» o «venta» se sube de verdad y la tienda se regenera en ~1 minuto.
+            </p>
+            <div className="formgrid">
+              <div className="field"><label>Usuario de GitHub</label>
+                <input value={s.ghUser} onChange={e => setS({ ...s, ghUser: e.target.value })} placeholder="tu-usuario" /></div>
+              <div className="field"><label>Repositorio</label>
+                <input value={s.ghRepo} onChange={e => setS({ ...s, ghRepo: e.target.value })} placeholder="Tiendamax" /></div>
+              <div className="field"><label>Rama</label>
+                <input value={s.ghBranch} onChange={e => setS({ ...s, ghBranch: e.target.value })} placeholder="main" /></div>
+              <div className="field"><label>Archivo del catálogo</label>
+                <input value={s.ghPath} onChange={e => setS({ ...s, ghPath: e.target.value })} placeholder="productos.json" /></div>
+              <div className="field" style={{ gridColumn: '1 / -1' }}><label>Token de acceso (permiso Contents:write · el mismo estilo que usa tu admin)</label>
+                <input value={s.ghToken} onChange={e => setS({ ...s, ghToken: e.target.value })} placeholder="ghp_… o github_pat_…" type="password" /></div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+              <button className="button green" onClick={() => void put(s)}>Guardar conexión</button>
+              <button className="button" onClick={() => void testGh()} disabled={ghTesting}>{ghTesting ? 'Probando…' : 'Probar conexión'}</button>
+            </div>
+            {ghTest && <div style={{ marginTop: 8 }}><span className={`tag ${ghTest.ok ? '' : 'yellow'}`}>{ghTest.ok ? '✓' : '⚠'} {ghTest.message}</span></div>}
+            <div className="metric" style={{ marginTop: 12 }}><span>Modo simulación (no sube cambios a la tienda)</span>
+              <span className={`switch${s.shopSim ? ' on' : ''}`} onClick={() => void put({ shopSim: !s.shopSim })} /></div>
+            <div className="field" style={{ marginTop: 10 }}><label>Aviso de stock bajo cuando quedan N o menos: {s.lowStock}</label>
+              <input type="range" min={1} max={15} value={s.lowStock} onChange={e => setS({ ...s, lowStock: parseInt(e.target.value, 10) })} onMouseUp={() => void put({ lowStock: s.lowStock })} onTouchEnd={() => void put({ lowStock: s.lowStock })} /></div>
+            <p className="muted" style={{ margin: '8px 0 0', fontSize: 10, lineHeight: 1.7 }}>
+              Cómo crear el token: GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token, marca <b>repo</b> (o solo Contents: read/write en fine-grained). Es el mismo dato que tu panel de TiendaMax guarda en “Token”.
+            </p>
+          </div>
+        </article>
         <article className="card">
           <div className="cardhead"><h3>Notificaciones push</h3><span className="muted">WEB PUSH · SIN SERVICIOS EXTERNOS</span></div>
           <div className="panelbody">

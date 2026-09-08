@@ -17,6 +17,16 @@ export interface NovaSettings {
   waToken: string;
   waPhoneId: string;
   waVerifyToken: string;
+  vapidPub: string;
+  vapidPriv: string;
+  ghUser: string;
+  ghRepo: string;
+  ghBranch: string;
+  ghPath: string;
+  ghSite: string;
+  ghToken: string;
+  shopSim: boolean;
+  lowStock: number;
 }
 
 export async function getSettings(): Promise<NovaSettings> {

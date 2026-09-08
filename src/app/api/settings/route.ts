@@ -39,6 +39,14 @@ export async function PUT(req: NextRequest) {
     if (typeof b?.waToken === 'string') data.waToken = b.waToken.trim().slice(0, 400);
     if (typeof b?.waPhoneId === 'string') data.waPhoneId = b.waPhoneId.replace(/\D/g, '').slice(0, 30);
     if (typeof b?.waVerifyToken === 'string') data.waVerifyToken = b.waVerifyToken.trim().slice(0, 80) || 'nova-verify';
+    if (typeof b?.ghUser === 'string') data.ghUser = b.ghUser.trim().slice(0, 60);
+    if (typeof b?.ghRepo === 'string') data.ghRepo = b.ghRepo.trim().slice(0, 80) || 'Tiendamax';
+    if (typeof b?.ghBranch === 'string') data.ghBranch = b.ghBranch.trim().slice(0, 40) || 'main';
+    if (typeof b?.ghPath === 'string') data.ghPath = b.ghPath.trim().replace(/^\/+/, '').slice(0, 120) || 'productos.json';
+    if (typeof b?.ghSite === 'string') data.ghSite = b.ghSite.trim().slice(0, 200) || 'https://tiendamax.org';
+    if (typeof b?.ghToken === 'string') data.ghToken = b.ghToken.trim().slice(0, 200);
+    if (typeof b?.shopSim === 'boolean') data.shopSim = b.shopSim;
+    if (Number.isInteger(b?.lowStock) && b.lowStock >= 1 && b.lowStock <= 50) data.lowStock = b.lowStock;
     const s = await db.setting.update({ where: { id: 'nova' }, data });
     return NextResponse.json({ ok: true, settings: s });
   } catch {

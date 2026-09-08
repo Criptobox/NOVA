@@ -14,6 +14,9 @@ interface Msg {
 
 const CHIPS = [
   ['hola', '👋 Saludar (menú)'],
+  ['stock bajo', '📦 Stock bajo tienda'],
+  ['reponer 10 batería must', '📥 Reponer stock'],
+  ['venta de 2 batería a 300', '💰 Registrar venta'],
   ['precio btc', '🪙 Precio BTC'],
   ['100 usd a mxn', '💱 100 USD → MXN'],
   ['50 eur a cop', '💱 50 EUR → COP'],

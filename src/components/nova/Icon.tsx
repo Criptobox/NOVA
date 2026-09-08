@@ -6,7 +6,8 @@ import type { CSSProperties } from 'react';
 
 export type IconName =
   | 'home' | 'brain' | 'chat' | 'coins' | 'chart' | 'clock' | 'gear'
-  | 'download' | 'bell' | 'bellOn' | 'user' | 'shield' | 'bolt' | 'check';
+  | 'download' | 'bell' | 'bellOn' | 'user' | 'shield' | 'bolt' | 'check'
+  | 'box' | 'cart' | 'refresh' | 'plus' | 'minus';
 
 const PATHS: Record<IconName, React.ReactNode> = {
   home: <path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1v-8.5Z" />,
@@ -55,6 +56,27 @@ const PATHS: Record<IconName, React.ReactNode> = {
   shield: <path d="M12 3.5 5.5 6v5.2c0 4.3 2.8 7.4 6.5 9.3 3.7-1.9 6.5-5 6.5-9.3V6L12 3.5Z" />,
   bolt: <path d="M13 3 5.5 13.5h5L11 21l7.5-10.5h-5L13 3Z" />,
   check: <path d="m5 12.5 4.5 4.5L19 7.5" />,
+  box: (
+    <>
+      <path d="M12 3.3 20 7.5v9L12 20.7 4 16.5v-9L12 3.3Z" />
+      <path d="M4 7.5 12 12l8-4.5M12 12v8.7" />
+    </>
+  ),
+  cart: (
+    <>
+      <circle cx="9.5" cy="19" r="1.4" />
+      <circle cx="17" cy="19" r="1.4" />
+      <path d="M3.5 4.5H6l2.2 10.4a1 1 0 0 0 1 .8h7.6a1 1 0 0 0 1-.8L20 8H6.3" />
+    </>
+  ),
+  refresh: (
+    <>
+      <path d="M19 12a7 7 0 1 1-2.05-4.95" />
+      <path d="M19 3.8V8h-4.2" />
+    </>
+  ),
+  plus: <path d="M12 5v14M5 12h14" />,
+  minus: <path d="M5 12h14" />,
 };
 
 export function Icon({ name, size = 18, style, className }: {

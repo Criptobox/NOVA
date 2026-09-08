@@ -113,5 +113,36 @@ export async function GET(req: NextRequest) {
     return csvResponse(`nova-recordatorios-${stamp()}.csv`, csv);
   }
 
+  if (what === 'tienda_productos') {
+    const rows = await db.shopProduct.findMany({ orderBy: { nombre: 'asc' } });
+    const csv = toCsv(
+      ['id_tienda', 'producto', 'slug', 'categoria', 'subcategoria', 'precio_usd', 'stock', 'valor_stock_usd'],
+      rows.map(r => [r.extId, r.nombre, r.slug, r.categoria, r.subcat, r.precio, r.stock, +(r.stock * r.precio).toFixed(2)]),
+    );
+    return csvResponse(`nova-tienda-productos-${stamp()}.csv`, csv);
+  }
+
+  if (what === 'tienda_movimientos') {
+    const moves = await db.stockMove.findMany({ orderBy: { createdAt: 'asc' } });
+    const csv = toCsv(
+      ['fecha', 'producto', 'tipo', 'unidades', 'stock_antes', 'stock_despues', 'total_usd', 'origen', 'sincronizado', 'nota'],
+      moves.map(m => [
+        fmt(m.createdAt), m.nombre, m.kind, m.delta, m.before, m.after,
+        m.total ?? '', m.source === 'voz' ? 'voz' : 'panel',
+        m.sync === 'github' ? 'subido a GitHub' : 'simulación', m.note,
+      ]),
+    );
+    return csvResponse(`nova-tienda-movimientos-${stamp()}.csv`, csv);
+  }
+
+  if (what === 'tienda_ventas') {
+    const ventas = await db.stockMove.findMany({ where: { kind: 'venta' }, orderBy: { createdAt: 'asc' } });
+    const rows = ventas.map(v => [fmt(v.createdAt), v.nombre, Math.abs(v.delta), v.unitPrice ?? 0, v.total ?? 0, v.source === 'voz' ? 'voz' : 'panel', v.note]);
+    const total = rows.reduce((a, r) => a + (r[4] as number), 0);
+    rows.push(['TOTAL', '', '', '', +total.toFixed(2), '', '']);
+    const csv = toCsv(['fecha', 'producto', 'unidades', 'precio_unitario_usd', 'total_usd', 'origen', 'nota'], rows);
+    return csvResponse(`nova-tienda-ventas-${stamp()}.csv`, csv);
+  }
+
   return new Response('export desconocido', { status: 400 });
 }

@@ -13,6 +13,7 @@ import { CATALOG, findCoin, getPrices, money, money2, fmtAmt, symOf, nameOf, pri
 import { aiReply, transcribeAudio, describeImage } from './ai';
 import { waMode, fetchWaMedia } from './whatsapp';
 import { parseFxIntent, convertCurrency, formatFxReply } from './fx';
+import { parseShopCommand, shopReply, type ShopCommand } from './shop';
 import { pushAll } from './push';
 import type { NovaSettings } from './settings';
 
@@ -47,6 +48,7 @@ const MENU_LIST = {
     { id: cmdId('portafolio'), title: '💼 Mi portafolio', description: 'Valor total de tus criptos' },
     { id: cmdId('alertas'), title: '⏰ Mis alertas', description: 'Avisos de precio vigilados' },
     { id: cmdId('resumen cripto'), title: '🌅 Resumen cripto', description: 'Suben y bajan del mercado' },
+    { id: cmdId('stock bajo'), title: '📦 Stock de la tienda', description: 'TiendaMax: existencias, ventas y reposiciones' },
     { id: cmdId('100 usd a mxn'), title: '💱 Convertir divisas', description: 'Ej: 100 usd a mxn, 50 eur a cop' },
     { id: cmdId('recordar tarea a las 15:00'), title: '⏱ Crear recordatorio', description: 'Escribe luego tu tarea y hora' },
     { id: cmdId('hablar con un humano'), title: '👤 Hablar con humano', description: 'Te comunico con el equipo' },
@@ -78,6 +80,13 @@ Puedo ayudarte con:
 • "recordar llamar a Ana a las 15:00"
 • "recordar gym a las 7:00 am mañana"
 • "recordar tomar agua a las 9 todos los dias"
+📦 *Tu tienda (TiendaMax)*
+• "stock de batería must" → existencias reales de tiendamax.org
+• "stock bajo" / "agotados" → qué falta reponer
+• "reponer 10 batería must" → suma stock y lo sube a tu tienda
+• "elimina 3 ventilador" → resta stock (merma, rotura…)
+• "venta de 2 batería a 300" → registra la venta y descuenta
+• "deja el stock de luces en 5" → fija un valor exacto
 👤 *Humano*
 • "humano" o "operador" → te comunico con una persona
 
@@ -297,6 +306,7 @@ export async function processInbound(msg: InboundMessage): Promise<EngineResult>
   let reply: string | null = null;
   let intent = intentStatic || 'conversacion_ia';
   let opts: DeliverOpts = { intent };
+  let shopCmd: ShopCommand | null = null;
 
   if (/^(ayuda|help|menu|menú|comandos|start)/.test(t) && t.length < 30) {
     intent = intentStatic || 'ayuda';
@@ -306,6 +316,16 @@ export async function processInbound(msg: InboundMessage): Promise<EngineResult>
     intent = intentStatic || 'saludo';
     reply = `¡Hola, ${name}! 👋 Soy *NOVA*, tu agente personal. ¿Qué te ayudo a hacer hoy?`;
     opts = { intent, list: MENU_LIST };
+  } else if ((shopCmd = parseShopCommand(t)) !== null) {
+    // v007 — Tienda TiendaMax: antes de cripto para que "cuánto stock hay…" no la capture el precio
+    const writeIntent = ['venta', 'reposicion', 'eliminacion', 'ajuste'].includes(shopCmd.intent);
+    if (writeIntent && s.ownerWa && msg.waId !== s.ownerWa) {
+      intent = `tienda_denegada`;
+      reply = '🔒 La gestión de stock de la tienda (ventas, reposiciones, mermas) está reservada al dueño. Si eres tú, pon tu número en Ajustes → "Número del dueño" del dashboard.';
+    } else {
+      intent = `tienda_${shopCmd.intent}`;
+      reply = await shopReply(s, text, shopCmd, 'voz');
+    }
   } else if (/^(precio|cu[aá]nto|cotizaci[oó]n|valor)/.test(t) || /precio de|cuanto vale|cuánto vale/.test(t)) {
     intent = 'precio';
     const coin = findCoin(t);
