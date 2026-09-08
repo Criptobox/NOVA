@@ -1,6 +1,24 @@
-# NOVA v006 — Agente WhatsApp + Cripto (PWA)
+# NOVA v007 — Agente WhatsApp + Cripto + Tienda (PWA)
 
-NOVA es un agente inteligente que **atiende usuarios por WhatsApp** usando la **API oficial de Meta (Cloud API)** — la vía **100% gratis para responder a tus usuarios (mensajes de servicio) y sin riesgo de baneo** — con seguimiento de criptomonedas en vivo, alertas de precio, recordatorios, notas de voz, análisis de imágenes y un **dashboard PWA instalable** con el cerebro neuronal de NOVA.
+NOVA es un agente inteligente que **atiende usuarios por WhatsApp** usando la **API oficial de Meta (Cloud API)** — la vía **100% gratis para responder a tus usuarios (mensajes de servicio) y sin riesgo de baneo** — con seguimiento de criptomonedas en vivo, **control por voz de tu tienda TiendaMax**, alertas de precio, recordatorios, notas de voz, análisis de imágenes y un **dashboard PWA instalable** con el cerebro neuronal de NOVA.
+
+## Novedades v007 (sobre v006) — Control de tienda TiendaMax por voz
+
+NOVA ahora gestiona el inventario real de **tiendamax.org**. La tienda vive en GitHub Pages y su base de datos es `productos.json`; el propio panel admin de TiendaMax guarda cambios con la GitHub Contents API. NOVA usa el **mismo mecanismo**:
+
+| # | Función | Detalle |
+|---|---------|---------|
+| 1 | **Lectura del catálogo real** (sin token): 138 productos con stock y precios reales de tiendamax.org. Sin conexión → última copia guardada, nunca datos inventados | ✅ |
+| 2 | **Escritura real con token de GitHub**: "reponer 10 batería must" → commit en `productos.json` del repo → la tienda se regenera en ~1 min. Igual que el admin oficial (GET sha → PUT) | ✅ |
+| 3 | **Comandos de voz en español**: consultas ("stock de X", "stock bajo", "agotados", "catálogo") para todos; escrituras ("reponer N…", "elimina N…", "venta de N… a precio", "deja el stock de… en N") reservadas al número del dueño | ✅ |
+| 4 | **Registro de ventas**: "venta de 2 baterías a 300" → descuenta stock y anota la venta (2 × $300 = $600) en el libro de ventas; si no hay stock suficiente lo dice y no registra ventas fantasma; si pides más de lo que hay, vende lo disponible y lo aclara | ✅ |
+| 5 | **Modo simulación honesto** (por defecto): ensaya los comandos sin tocar la tienda; cada respuesta y cada movimiento quedan etiquetados "🧪 Simulación". Al pegar el token y apagar la simulación, todo sube de verdad | ✅ |
+| 6 | **Vista Tienda en el panel**: inventario en vivo (productos, unidades, valor, stock bajo, agotados, ventas), buscador, botones rápidos +1/+5/+10/−1 y formulario de venta con precio real, bitácora de movimientos con estado de sincronización (⬆ GitHub / ◍ simulación) | ✅ |
+| 7 | **Avisos "volvió el stock"**: cuando una reposición saca un producto del agotado, NOVA dispara el workflow oficial `flush-push-queue.yml` de TiendaMax para avisar a los suscriptores (mejor esfuerzo) | ✅ |
+| 8 | **CSV de tienda**: inventario, movimientos y libro de ventas exportables a Excel (BOM + `;` + CRLF) | ✅ |
+| 9 | **Ajustes → Conexión tienda**: usuario, repo, rama, archivo, token (probar conexión), interruptor de simulación y umbral de stock bajo. La búsqueda difusa entiende nombres parciales, sin acentos ni emojis, y pregunta cuando hay varios candidatos | ✅ |
+
+**Cómo activar la escritura real**: Ajustes → Conexión tienda (GitHub · TiendaMax) → pega el mismo usuario/token que usa tu panel admin de TiendaMax (permiso **Contents: write**) → Probar conexión → apaga el Modo simulación. Listo: cada comando de voz se sube al repo y tu tienda se actualiza.
 
 ## Novedades v006 (sobre v005)
 

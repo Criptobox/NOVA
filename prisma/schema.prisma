@@ -91,6 +91,14 @@ model Setting {
   waVerifyToken    String   @default("nova-verify")
   vapidPub         String   @default("") // v006: clave pública Web Push (avisos al dueño)
   vapidPriv        String   @default("") // v006: clave privada Web Push
+  ghUser           String   @default("") // v007: GitHub usuario dueño del repo de la tienda
+  ghRepo           String   @default("Tiendamax") // v007: repo de la tienda (mismo mecanismo que el admin de TiendaMax)
+  ghBranch         String   @default("main")
+  ghPath           String   @default("productos.json")
+  ghSite           String   @default("https://tiendamax.org") // lectura pública del catálogo
+  ghToken          String   @default("") // v007: token con permiso Contents:write para subir cambios
+  shopSim          Boolean  @default(true) // v007: simulación local hasta conectar GitHub
+  lowStock         Int      @default(3) // v007: umbral de stock bajo
   updatedAt        DateTime @updatedAt
 }
 
@@ -101,5 +109,39 @@ model PushSub {
   p256dh    String
   auth      String
   ua        String   @default("")
+  createdAt DateTime @default(now())
+}
+
+// v007 — Espejo local del catálogo real de TiendaMax (productos.json)
+model ShopProduct {
+  id        String   @id @default(cuid())
+  extId     String   @unique // id del producto en productos.json
+  nombre    String
+  slug      String   @default("")
+  categoria String   @default("")
+  subcat    String   @default("")
+  precio    Float    @default(0) // precioActual en USD
+  stock     Int      @default(0)
+  imagen    String   @default("")
+  updatedAt DateTime @updatedAt
+}
+
+// v007 — Bitácora de movimientos de stock y ventas (voz o panel)
+model StockMove {
+  id        String   @id @default(cuid())
+  extId     String
+  nombre    String
+  kind      String // reposicion | eliminacion | venta | ajuste
+  delta     Int // +N / -N aplicado (ajuste = 0, guarda before/after)
+  before    Int
+  after     Int
+  qty       Int      @default(0) // unidades de la operación
+  unitPrice Float? // venta: precio unitario aplicado
+  total     Float? // venta: qty × unitPrice
+  currency  String   @default("USD")
+  note      String   @default("")
+  source    String   @default("voz") // voz | panel
+  sync      String   @default("local") // github | sim
+  commitUrl String   @default("")
   createdAt DateTime @default(now())
 }
