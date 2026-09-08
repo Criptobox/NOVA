@@ -1,6 +1,19 @@
-# NOVA v007 — Agente WhatsApp + Cripto + Tienda (PWA)
+# NOVA v008 — Agente WhatsApp + Cripto + Tienda (PWA)
 
 NOVA es un agente inteligente que **atiende usuarios por WhatsApp** usando la **API oficial de Meta (Cloud API)** — la vía **100% gratis para responder a tus usuarios (mensajes de servicio) y sin riesgo de baneo** — con seguimiento de criptomonedas en vivo, **control por voz de tu tienda TiendaMax**, alertas de precio, recordatorios, notas de voz, análisis de imágenes y un **dashboard PWA instalable** con el cerebro neuronal de NOVA.
+
+## Novedades v008 (sobre v007) — Actualización automática de la PWA
+
+**El problema que resuelve**: con la PWA instalada (abierta desde el icono), el navegador no busca versiones nuevas del service worker porque no hay navegaciones — la app quedaba “clavada” en la versión vieja y los cambios no se veían sin borrar datos del sitio.
+
+| # | Mejora | Detalle |
+|---|--------|---------|
+| 1 | **Auto-actualización real** | El panel busca versiones nuevas al abrir, al volver a la app (visibilitychange) y cada 30 min. Cuando detecta una, el nuevo SW se activa (skipWaiting) y **la página se recarga sola una vez** — sin refresco manual | ✅ |
+| 2 | **Aviso de versión aplicada** | Tras recargar aparece un toast: “NOVA se actualizó a la v008 ✓” | ✅ |
+| 3 | **Versión visible siempre** | La versión aparece en la barra superior (“NOVA v008”) y en el pie (“PWA v008 · actualización automática”) para verificar de un vistazo qué versión estás viendo | ✅ |
+| 4 | **Limpieza de cachés viejas** | Al activarse la nueva versión se borran todas las cachés anteriores (nova-v001…v007) | ✅ |
+
+> **Si tu PWA sigue en v007 o anterior**: ábrela y haz **una recarga manual** (desliza para refrescar, o menú del navegador → Recargar; en Chrome escritorio Ctrl+Shift+R). Esa única recarga trae el sw v008 — a partir de ahí todo se actualiza solo para siempre.
 
 ## Novedades v007 (sobre v006) — Control de tienda TiendaMax por voz
 

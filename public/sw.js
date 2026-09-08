@@ -1,10 +1,11 @@
-/* NOVA v007 — Service Worker
+/* NOVA v008 — Service Worker
    · Precaché del shell (PWA instalable y arranque instantáneo)
    · Navegación: network-first con fallback a caché
    · API: network-only (datos siempre frescos)
    · Estáticos: cache-first + revalidación
+   · Auto-actualización: skipWaiting + claim → el cliente recarga solo
    · Web Push: notificaciones al pedir humano + clic para abrir Conversaciones */
-const VERSION = 'nova-v007';
+const VERSION = 'nova-v008';
 const CORE = [
   '/',
   '/manifest.webmanifest',
@@ -20,6 +21,10 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(VERSION).then((cache) => cache.addAll(CORE)).then(() => self.skipWaiting())
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
