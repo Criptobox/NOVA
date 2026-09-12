@@ -1,0 +1,8 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "prisma generate && (prisma db push --skip-generate || echo 'BD no conectada: las tablas se crean al conectar Vercel Postgres y redesplegar') && next build",
+  "crons": [
+    { "path": "/api/cron/tick", "schedule": "0 0 * * *" }
+  ]
+}

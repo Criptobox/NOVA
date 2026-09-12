@@ -1,0 +1,214 @@
+// NOVA v012 — Esquema PostgreSQL para Vercel Postgres (pestaña Storage de Vercel).
+// Las tablas se crean SOLOS en el build (prisma db push). Plan B: pegar setup.sql
+// en la pestaña Query de la base de datos. Incluye trading (TradingConfig,
+// ExchangeCredentials, TradeLog, SniperWatch).
+// Agente WhatsApp + seguimiento cripto + tienda + trading automatizado
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Contactos que escriben al agente (WhatsApp real o simulador)
+model Contact {
+  id        String    @id @default(cuid())
+  waId      String    @unique
+  name      String
+  channel   String    @default("whatsapp") // whatsapp | simulador
+  botPaused Boolean   @default(false) // v004: true = el dueño tomó la conversación, NOVA no responde
+  createdAt DateTime  @default(now())
+  lastSeen  DateTime  @default(now())
+  messages  Message[]
+}
+
+// Mensajes de cada conversación
+model Message {
+  id        String   @id @default(cuid())
+  contactId String
+  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  role      String   // user | agent | owner | system
+  kind      String   @default("text") // text | audio | image | note | alert | summary
+  body      String
+  meta      String? // JSON opcional (transcripción, descripción de imagen, botones, etc.)
+  intent    String? // v004: intención detectada (para métricas)
+  latencyMs Int? // v004: tiempo de respuesta del agente (para métricas)
+  createdAt DateTime @default(now())
+}
+
+// Alertas de precio vigiladas por el planificador (avisan por WhatsApp)
+model PriceAlert {
+  id        String    @id @default(cuid())
+  coinId    String
+  sym       String
+  dir       String // above | below
+  price     Float
+  on        Boolean   @default(true)
+  fired     Boolean   @default(false)
+  firedAt   DateTime?
+  createdBy String? // waId del contacto si la creó el bot
+  createdAt DateTime  @default(now())
+}
+
+// Portafolio cripto (global, gestionado desde el dashboard o el bot)
+model Holding {
+  id        String   @id @default(cuid())
+  coinId    String   @unique
+  sym       String
+  name      String
+  amt       Float    @default(0)
+  createdAt DateTime @default(now())
+}
+
+// Mensajes programados: recordatorios y resumen diario de cripto
+model ScheduledJob {
+  id        String    @id @default(cuid())
+  kind      String // reminder | summary
+  label     String
+  body      String
+  target    String    @default("owner") // owner | all | waId concreto
+  when      DateTime
+  repeat    String    @default("none") // none | daily
+  lastRun   DateTime?
+  on        Boolean   @default(true)
+  createdAt DateTime  @default(now())
+}
+
+// Ajustes únicos del agente (singleton id="nova")
+model Setting {
+  id               String   @id @default("nova")
+  persona          String   @default("profesional") // profesional | casual | creativa | tecnica
+  mode247          Boolean  @default(true)
+  startHour        Int      @default(8)
+  endHour          Int      @default(22)
+  maxMsgsPerMin    Int      @default(20)
+  ownerWa          String   @default("")
+  aiEnabled        Boolean  @default(true)
+  dailySummaryOn   Boolean  @default(false)
+  dailySummaryHour Int      @default(9)
+  waToken          String   @default("")
+  waPhoneId        String   @default("")
+  waVerifyToken    String   @default("nova-verify")
+  vapidPub         String   @default("") // v006: clave pública Web Push (avisos al dueño)
+  vapidPriv        String   @default("") // v006: clave privada Web Push
+  ghUser           String   @default("") // v007: GitHub usuario dueño del repo de la tienda
+  ghRepo           String   @default("Tiendamax") // v007: repo de la tienda (mismo mecanismo que el admin de TiendaMax)
+  ghBranch         String   @default("main")
+  ghPath           String   @default("productos.json")
+  ghSite           String   @default("https://tiendamax.org") // lectura pública del catálogo
+  ghToken          String   @default("") // v007: token con permiso Contents:write para subir cambios
+  shopSim          Boolean  @default(true) // v007: simulación local hasta conectar GitHub
+  lowStock         Int      @default(3) // v007: umbral de stock bajo
+  updatedAt        DateTime @updatedAt
+}
+
+// v006 — Suscripciones Web Push del dashboard (aviso inmediato al pedir humano)
+model PushSub {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  ua        String   @default("")
+  createdAt DateTime @default(now())
+}
+
+// v007 — Espejo local del catálogo real de TiendaMax (productos.json)
+model ShopProduct {
+  id        String   @id @default(cuid())
+  extId     String   @unique // id del producto en productos.json
+  nombre    String
+  slug      String   @default("")
+  categoria String   @default("")
+  subcat    String   @default("")
+  precio    Float    @default(0) // precioActual en USD
+  stock     Int      @default(0)
+  imagen    String   @default("")
+  updatedAt DateTime @updatedAt
+}
+
+// v007 — Bitácora de movimientos de stock y ventas (voz o panel)
+model StockMove {
+  id        String   @id @default(cuid())
+  extId     String
+  nombre    String
+  kind      String // reposicion | eliminacion | venta | ajuste
+  delta     Int // +N / -N aplicado (ajuste = 0, guarda before/after)
+  before    Int
+  after     Int
+  qty       Int      @default(0) // unidades de la operación
+  unitPrice Float? // venta: precio unitario aplicado
+  total     Float? // venta: qty × unitPrice
+  currency  String   @default("USD")
+  note      String   @default("")
+  source    String   @default("voz") // voz | panel
+  sync      String   @default("local") // github | sim
+  commitUrl String   @default("")
+  createdAt DateTime @default(now())
+}
+
+// ══════════════════════════════════════════════════════════════
+// v010 — MÓDULO DE TRADING AUTOMATIZADO
+// Prudencia por diseño: simulación ON por defecto y nunca dinero
+// real sin que el dueño lo desactive explícitamente.
+// ══════════════════════════════════════════════════════════════
+
+// Ajustes del motor de trading (singleton id="trading")
+model TradingConfig {
+  id            String   @id @default("trading")
+  on            Boolean  @default(false) // motor activo (evalúa señales en el cron)
+  simMode       Boolean  @default(true) // 🧪 SIEMPRE simulación al inicio
+  symbols       String   @default("BTCUSDT,ETHUSDT,SOLUSDT") // pares vigilados, separados por coma
+  maxPosQuote   Float    @default(50) // tamaño máximo por posición en USDT
+  maxPctCapital Float    @default(5) // % máximo del capital por operación
+  stopLossPct   Float    @default(2) // stop-loss obligatorio (%)
+  takeProfitPct Float    @default(4) // toma de ganancia (%)
+  maxTradesHour Int      @default(3) // límite de operaciones por hora
+  sniperOn      Boolean  @default(false) // vigilancia de nuevos listados
+  updatedAt     DateTime @updatedAt
+}
+
+// Credenciales del exchange cifradas con AES-256-GCM (nunca en claro)
+model ExchangeCredentials {
+  id        String   @id @default(cuid())
+  exchange  String   @default("binance")
+  label     String   @default("principal")
+  apiKeyEnc String // cifrado
+  apiSecEnc String // cifrado
+  testnet   Boolean  @default(true) // testnet (fondos ficticios) por defecto
+  on        Boolean  @default(false) // credenciales activas
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Bitácora de operaciones (simulación, testnet o real)
+model TradeLog {
+  id        String   @id @default(cuid())
+  symbol    String // BTCUSDT
+  side      String // BUY | SELL
+  type      String   @default("MARKET")
+  price     Float // precio de referencia/ejecución
+  qty       Float // cantidad del activo
+  quoteQty  Float // qty × price (USDT)
+  result    Float? // PnL estimado en la venta que cierra
+  mode      String   @default("sim") // sim | testnet | real
+  signal    String   @default("") // señal/disparador (score, indicadores)
+  reason    String   @default("") // señal | stop-loss | take-profit | manual | sniper
+  status    String   @default("filled") // open | closed | filled | rejected | error
+  pairId    String? // venta → id de la compra que cierra
+  orderId   String? // id de orden en el exchange (testnet/real)
+  createdAt DateTime @default(now())
+}
+
+// v010 — Sniper de nuevos listados (exchange centralizado, solo simulación en Vercel)
+model SniperWatch {
+  id        String   @id @default(cuid())
+  symbol    String   @unique // par nuevo detectado
+  base      String   @default("")
+  quote     String   @default("")
+  firstSeen DateTime @default(now())
+  handled   Boolean  @default(false)
+  note      String   @default("")
+}
