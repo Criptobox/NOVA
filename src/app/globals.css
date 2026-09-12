@@ -471,6 +471,9 @@ linear-gradient(145deg,rgba(7,21,39,.92),rgba(2,9,19,.92))}
 }
 @media(max-width:700px){
   .nova-app .app{display:block}
+  .nova-app .dbwarn{padding:11px 13px;gap:10px;border-radius:12px;margin-bottom:11px}
+  .nova-app .dbwarn b{font-size:12px}
+  .nova-app .dbwarn span{font-size:10.5px}
   .nova-app .sidebar{position:fixed;left:10px;right:10px;width:auto;height:auto;bottom:calc(10px + env(safe-area-inset-bottom));top:auto;border-right:0;border-top:1px solid var(--line);border-radius:26px;padding:7px 5px;overflow:visible}
   .nova-app .brand,.nova-app .profile{display:none}
   .nova-app .nav{display:flex;justify-content:space-around;gap:2px}
@@ -545,6 +548,14 @@ linear-gradient(145deg,rgba(7,21,39,.92),rgba(2,9,19,.92))}
 .nova-app .miclive{display:flex;align-items:center;gap:8px;margin:0 12px 8px;padding:8px 11px;border-radius:11px;font-size:10px;line-height:1.4;color:#ffd7de;background:rgba(255,107,134,.10);border:1px dashed rgba(255,107,134,.32)}
 .nova-app .miclive i{width:8px;height:8px;border-radius:50%;background:#ff6b86;box-shadow:0 0 10px rgba(255,107,134,.8);flex:none;animation:nvpulse 1.2s infinite}
 
+/* ---------- v014: aviso de base de datos no conectada ---------- */
+.nova-app .dbwarn{display:flex;align-items:flex-start;gap:12px;margin:0 0 14px;padding:13px 16px;border-radius:14px;border:1px solid rgba(255,190,80,.45);background:linear-gradient(90deg,rgba(255,180,60,.16),rgba(255,180,60,.05));color:#ffd9a0;animation:nvfadein .3s ease}
+.nova-app .dbwarn svg{flex:none;margin-top:2px;color:#ffcf7d;filter:drop-shadow(0 0 8px rgba(255,190,80,.5))}
+.nova-app .dbwarn b{display:block;font-size:13px;letter-spacing:.2px;margin-bottom:3px;color:#ffe4b8}
+.nova-app .dbwarn span{display:block;font-size:11.5px;line-height:1.55;color:rgba(255,224,180,.88)}
+.nova-app .dbwarn span b{display:inline;font-size:inherit;margin:0;color:#ffe9c4}
+@keyframes nvfadein{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
 
 
 /* ============================================================
@@ -576,6 +587,13 @@ html[data-theme="light"] .nova-app{
 }
 html[data-theme="light"] .nova-app ::selection{background:rgba(45,108,223,.22)}
 html[data-theme="light"] .nova-app :focus-visible{outline-color:#2d6cdf}
+
+/* v014 — aviso de BD en tema claro */
+html[data-theme="light"] .nova-app .dbwarn{border-color:rgba(178,116,10,.35);background:linear-gradient(90deg,rgba(255,196,86,.22),rgba(255,196,86,.07));color:#6b4a08}
+html[data-theme="light"] .nova-app .dbwarn svg{color:#a86e08;filter:none}
+html[data-theme="light"] .nova-app .dbwarn b{color:#4a3305}
+html[data-theme="light"] .nova-app .dbwarn span{color:#6f5420}
+html[data-theme="light"] .nova-app .dbwarn span b{color:#4a3305}
 
 /* ---- sidebar / nav / perfil / barra superior ---- */
 html[data-theme="light"] .nova-app .sidebar{background:rgba(255,255,255,.90);border-right:1px solid rgba(20,24,34,.08);box-shadow:0 12px 34px rgba(24,28,45,.10)}

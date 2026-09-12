@@ -49,6 +49,7 @@ export default function NovaDashboard() {
   const [toast, setToast] = useState('');
   const [online, setOnline] = useState(true);
   const [pendientes, setPendientes] = useState(0);
+  const [dbOk, setDbOk] = useState<boolean | null>(null); // v014: null = comprobando
   const escalRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -80,6 +81,17 @@ export default function NovaDashboard() {
   }, []);
 
   useEffect(() => { void loadStats(); const t = setInterval(() => void loadStats(), 60000); return () => clearInterval(t); }, [loadStats]);
+
+  /* v014 — Diagnóstico de base de datos: si Vercel Postgres aún no está creada/
+     conectada, se muestra un aviso con los pasos exactos en vez de dejar los
+     apartados vacíos sin explicación. Se reintenta cada 60 s automáticamente. */
+  useEffect(() => {
+    const check = () => fetch('/api/health', { cache: 'no-store' })
+      .then(r => r.json()).then(h => setDbOk(!!h?.db)).catch(() => setDbOk(false));
+    check();
+    const t = setInterval(check, 60000);
+    return () => clearInterval(t);
+  }, []);
 
   /* v010 — MODO OFFLINE: indicador + sincronización de la outbox al reconectar */
   useEffect(() => {
@@ -201,6 +213,17 @@ export default function NovaDashboard() {
               <SwRegister />
             </div>
           </header>
+
+          {/* v014 — Aviso de base de datos no conectada (se muestra en TODAS las vistas) */}
+          {dbOk === false && (
+            <div className="dbwarn" role="alert">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <div>
+                <b>Base de datos no conectada</b>
+                <span>Ahora mismo los apartados quedan vacíos y no se guarda nada. En Vercel: pestaña <b>Storage</b> → <b>Create Database → Postgres</b> → <b>Connect Project</b> → <b>Redeploy</b> (las tablas se crean solas al redesplegar). Es el paso 4 de la DEPLOY-GUIA. Se reconecta solo cada 60 s.</span>
+              </div>
+            </div>
+          )}
 
           {/* ---------- INICIO ---------- */}
           {view === 'inicio' && (
