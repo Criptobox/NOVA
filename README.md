@@ -1,6 +1,18 @@
-# NOVA v013 — Agente WhatsApp + Cripto + Tienda + Trading (PWA)
+# NOVA v014 — Agente WhatsApp + Cripto + Tienda + Trading (PWA)
 
 NOVA es un agente inteligente que **atiende usuarios por WhatsApp** usando la **API oficial de Meta (Cloud API)** — la vía **100% gratis para responder a tus usuarios (mensajes de servicio) y sin riesgo de baneo** — con seguimiento de criptomonedas en vivo, **control por voz de tu tienda TiendaMax**, **trading automatizado en modo simulación**, alertas de precio, recordatorios, notas de voz, análisis de imágenes, **modo offline con comandos locales** y un **dashboard PWA instalable** con el cerebro neuronal de NOVA.
+
+## Novedades v014 (sobre v013) — El panel te avisa si falta la base de datos
+
+¿Ves el panel con apartados vacíos, guiones «—», «SIN DATOS» o secciones que no cargan? Eso pasa cuando **Vercel Postgres aún no está creada/conectada**: las APIs no tienen base y devuelven error en silencio. La v014 lo hace imposible de ignorar:
+
+| # | Mejora | Detalle |
+|---|--------|----------|
+| 1 | **Aviso visual de BD no conectada** | Banda ámbar fija bajo la barra superior (en TODAS las vistas, claro y oscuro): «Base de datos no conectada» con los pasos exactos: Storage → Create Database → Postgres → Connect Project → Redeploy |
+| 2 | **Diagnóstico automático** | Nuevo endpoint `/api/health`: comprueba la BD con `SELECT 1` al abrir el panel y cada 60 s. Cuando conectas la base y redespliegas, el aviso desaparece solo |
+| 3 | **Sin falsas alarmas** | Si la BD responde, el aviso NO se muestra jamás: el panel queda exactamente igual que en v013 |
+
+> 💡 El aviso es solo visual: NOVA sigue funcionando (simulador, cripto en vivo, voz) y todo se guarda en cuanto conectes la base y hagas Redeploy.
 
 ## Novedades v013 (sobre v012) — FIX: despliegues en Vercel que fallaban
 
@@ -262,4 +274,5 @@ public/                       # manifest.webmanifest, sw.js (nova-v011), iconos 
 - **v010** — Trading automatizado (simulación por defecto, señales, riesgo, backtest, sniper) + modo offline con comandos locales y outbox.
 - **v011** — 100% GitHub + Vercel (Vercel Postgres integrado, cron nativo en vercel.json, ticks perezosos, tablas automáticas en el build).
 - **v012** — Panel rediseñado: masonry sin huecos, tarjetas que se acoplan a la pantalla, diseño pro (iconos por módulo, badges de estado, pasos numerados), modo claro y oscuro con botón en la barra superior.
-- **v013** (esta) — FIX de despliegues en Vercel: paquetes de build en `dependencies`, `postcss.config.mjs` y `package-lock.json` incluidos en el paquete. Adiós al `Module not found` en `globals.css`.
+- **v013** — FIX de despliegues en Vercel: paquetes de build en `dependencies`, `postcss.config.mjs` y `package-lock.json` incluidos en el paquete. Adiós al `Module not found` en `globals.css`.
+- **v014** (esta) — Autodiagnóstico: si falta la base de datos en Vercel, el panel muestra un aviso ámbar con los pasos exactos (Storage → Connect → Redeploy) en vez de quedar vacío sin explicación. Endpoint `/api/health` con recheck cada 60 s.

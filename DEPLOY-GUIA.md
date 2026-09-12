@@ -1,4 +1,4 @@
-# 🚀 NOVA v013 — Despliegue SOLO con GitHub + Vercel (todo gratis)
+# 🚀 NOVA v014 — Despliegue SOLO con GitHub + Vercel (todo gratis)
 
 > Esta guía usa **ÚNICAMENTE GitHub y Vercel**. GitHub guarda el código; Vercel ejecuta la aplicación **y también la base de datos** (Vercel Postgres, que se crea desde el propio panel de Vercel). No necesitas crear cuenta en ningún otro sitio. El modo offline de la PWA va incluido.
 
@@ -92,6 +92,7 @@ Solo si quieres que recordatorios/alertas salgan a la hora exacta **aunque no us
 
 | Síntoma | Causa y solución |
 |---------|------------------|
+| El panel abre con una banda ámbar «Base de datos no conectada» y apartados vacíos | Es el propio panel avisándote: falta el Paso 4 (Storage → Create Database → Postgres → Connect Project → **Redeploy**). Al conectarla, la banda desaparece sola en menos de 60 s |
 | Build falla: `Module not found ... ./src/app/globals.css` (o `tw-animate-css`) | Tu repo tiene archivos de una versión antigua. Sube **TODOS** los archivos de este zip reemplazando los anteriores (clave: `package.json`, `package-lock.json`, `postcss.config.mjs`) y **Redeploy**. Si en Vercel → Settings → Environment Variables existe `NODE_ENV=production`, puedes dejarla: esta versión instala los paquetes de build igualmente |
 | Build falla: "Environment variable not found: DATABASE_URL" | Falta el Paso 4: crea el Postgres en Storage, conéctalo al proyecto y **Redeploy** |
 | La app abre pero las APIs dan error 500 | Faltan las tablas: repite el Paso 4 (Redeploy) o pega `setup.sql` en la pestaña Query |
