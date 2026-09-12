@@ -1,6 +1,19 @@
-# NOVA v012 — Agente WhatsApp + Cripto + Tienda + Trading (PWA)
+# NOVA v013 — Agente WhatsApp + Cripto + Tienda + Trading (PWA)
 
 NOVA es un agente inteligente que **atiende usuarios por WhatsApp** usando la **API oficial de Meta (Cloud API)** — la vía **100% gratis para responder a tus usuarios (mensajes de servicio) y sin riesgo de baneo** — con seguimiento de criptomonedas en vivo, **control por voz de tu tienda TiendaMax**, **trading automatizado en modo simulación**, alertas de precio, recordatorios, notas de voz, análisis de imágenes, **modo offline con comandos locales** y un **dashboard PWA instalable** con el cerebro neuronal de NOVA.
+
+## Novedades v013 (sobre v012) — FIX: despliegues en Vercel que fallaban
+
+Si tu despliegue en Vercel daba error `Module not found ... ./src/app/globals.css`, esta versión lo resuelve de raíz con 3 blindajes:
+
+| # | Corrección | Detalle |
+|---|-----------|----------|
+| 1 | **Paquetes de build pasan a `dependencies`** | `tailwindcss`, `@tailwindcss/postcss`, `tw-animate-css`, `typescript` y tipos de React ya no son devDependencies: se instalan SIEMPRE, aunque tu proyecto de Vercel tenga `NODE_ENV=production` (que hacía que npm los saltara y el build muriera con `Module not found` en `globals.css`) |
+| 2 | **`postcss.config.mjs` ahora viaja en el paquete** | Faltaba en los zips anteriores: sin ese archivo Tailwind v4 no queda configurado en Vercel. Ya se copia siempre |
+| 3 | **`package-lock.json` incluido** | Se genera al empaquetar: la instalación en Vercel es reproducible (mismas versiones exactas en cada despliegue) |
+| 4 | **Extra** | `engines: node >= 20.9` declarado en `package.json` y comprobación de build en sala limpia (instalación sin devDependencies + `next build`) antes de publicar |
+
+**Qué hacer si ya tenías el proyecto en GitHub:** sube/elige **TODOS** los archivos de este zip reemplazando los anteriores (sobre todo `package.json`, `postcss.config.mjs` y `package-lock.json`) y haz **Redeploy** en Vercel. No hace falta borrar nada de la base de datos: tus datos se conservan.
 
 ## Novedades v012 (sobre v011) — Panel rediseñado: cero huecos + modo claro y oscuro
 
@@ -248,4 +261,5 @@ public/                       # manifest.webmanifest, sw.js (nova-v011), iconos 
 - **v009** — Listo para GitHub + Vercel (endpoint cron idempotente, esquema Postgres, guía completa).
 - **v010** — Trading automatizado (simulación por defecto, señales, riesgo, backtest, sniper) + modo offline con comandos locales y outbox.
 - **v011** — 100% GitHub + Vercel (Vercel Postgres integrado, cron nativo en vercel.json, ticks perezosos, tablas automáticas en el build).
-- **v012** (esta) — Panel rediseñado: grid por áreas sin huecos, tarjetas que se acoplan a la pantalla, diseño pro (iconos por módulo, badges de estado, pasos numerados) y fondo del documento alineado en escritorio y móvil.
+- **v012** — Panel rediseñado: masonry sin huecos, tarjetas que se acoplan a la pantalla, diseño pro (iconos por módulo, badges de estado, pasos numerados), modo claro y oscuro con botón en la barra superior.
+- **v013** (esta) — FIX de despliegues en Vercel: paquetes de build en `dependencies`, `postcss.config.mjs` y `package-lock.json` incluidos en el paquete. Adiós al `Module not found` en `globals.css`.

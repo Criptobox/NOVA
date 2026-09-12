@@ -1,5 +1,5 @@
 -- ============================================================
--- NOVA v012 — setup.sql (PostgreSQL · PLAN B opcional)
+-- NOVA v013 — setup.sql (PostgreSQL · PLAN B opcional)
 -- Normalmente NO hace falta: el build de Vercel crea las tablas
 -- solo (prisma db push) al conectar Vercel Postgres y redesplegar.
 -- PLAN B: pega TODO este archivo en Storage → tu base → pestaña

@@ -1,4 +1,4 @@
-// NOVA v012 — Esquema PostgreSQL para Vercel Postgres (pestaña Storage de Vercel).
+// NOVA v013 — Esquema PostgreSQL para Vercel Postgres (pestaña Storage de Vercel).
 // Las tablas se crean SOLOS en el build (prisma db push). Plan B: pegar setup.sql
 // en la pestaña Query de la base de datos. Incluye trading (TradingConfig,
 // ExchangeCredentials, TradeLog, SniperWatch).
