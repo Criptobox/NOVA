@@ -9,7 +9,7 @@ const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-display", 
 export const metadata: Metadata = {
   title: "NOVA — Agente WhatsApp + Cripto",
   description:
-    "NOVA v012: agente inteligente para WhatsApp (API oficial, gratis y sin riesgo) con cripto en datos reales, control por voz de tu tienda, trading automatizado en modo simulación, modo offline con comandos locales, cerebro neuronal en vivo, CSV y avisos push. Listo para GitHub + Vercel (todo dentro de Vercel: base de datos integrada, cron nativo y modo offline).",
+    "NOVA v013: agente inteligente para WhatsApp (API oficial, gratis y sin riesgo) con cripto en datos reales, control por voz de tu tienda, trading automatizado en modo simulación, modo offline con comandos locales, cerebro neuronal en vivo, CSV y avisos push. Listo para GitHub + Vercel (todo dentro de Vercel: base de datos integrada, cron nativo y modo offline).",
   applicationName: "NOVA",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
@@ -33,7 +33,7 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-/* v012 — Tema claro/oscuro: se aplica ANTES de pintar para evitar parpadeos.
+/* v013 — Tema claro/oscuro: se aplica ANTES de pintar para evitar parpadeos.
    Orden: localStorage · nova:theme → prefers-color-scheme → oscuro. */
 const THEME_INIT = `(function(){try{var t=localStorage.getItem('nova:theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}document.documentElement.dataset.theme=t;var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',t==='light'?'#f4f1e9':'#030711');}catch(e){document.documentElement.dataset.theme='dark';}})();`;
 
