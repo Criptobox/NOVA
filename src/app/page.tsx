@@ -36,7 +36,7 @@ interface Stats {
   cryptoLive: boolean; withinHours: boolean;
   shopCount: number; shopUnidades: number; shopBajos: number; shopAgotados: number;
 }
-interface HomeRow { id: string; sym: string; name: string; price: number; chg: number }
+interface HomeRow { id: string; sym: string; name: string; price: number; chg: number; image?: string }
 interface TradingHome { on: boolean; mode: string; open: number; pnl: number }
 
 export default function NovaDashboard() {
@@ -354,7 +354,7 @@ export default function NovaDashboard() {
                     <div style={{ marginTop: 8 }}>
                       {top.map(r => (
                         <div className="hometile" key={r.id}>
-                          <CoinAvatar id={r.id} sym={r.sym} /><span>{r.sym}</span>
+                          <CoinAvatar id={r.id} sym={r.sym} image={r.image} /><span>{r.sym}</span>
                           <span className="muted">${r.price?.toLocaleString('en-US', { maximumFractionDigits: 2 })}</span>
                           <b className={r.chg >= 0 ? 'up' : 'down'}>{r.chg >= 0 ? '↑' : '↓'} {Math.abs(r.chg).toFixed(1)}%</b>
                         </div>

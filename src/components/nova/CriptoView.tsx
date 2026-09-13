@@ -1,50 +1,94 @@
 'use client';
 
-/* NOVA v005 — Vista Criptos: portafolio, movers, alertas (solo datos reales) */
-import { useCallback, useEffect, useState } from 'react';
+/* NOVA v019 — Vista Criptos: portafolio, movers, alertas (solo datos reales)
+   · Logos originales de CoinGecko en cada moneda.
+   · "Añadir moneda" y "Alertas" ya no están limitados al catálogo curado:
+     un buscador (CoinPicker) consulta las ~17.000 monedas de CoinGecko. */
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CoinAvatar, Spark, money, money2, fmtAmt, fmtAge, CsvButton } from './ui';
 import { cache } from '@/lib/nova/offline';
 
 interface Holding {
   id: string; coinId: string; sym: string; name: string; amt: number;
-  price: number | null; chg: number | null; spark: number[]; value: number | null;
+  price: number | null; chg: number | null; spark: number[]; value: number | null; image?: string;
 }
 interface Alert {
   id: string; coinId: string; sym: string; dir: string; price: number; on: boolean;
-  fired: boolean; firedAt: string | null; currentPrice: number | null; chg: number | null; createdAt: string;
+  fired: boolean; firedAt: string | null; currentPrice: number | null; chg: number | null; createdAt: string; image?: string;
 }
-interface CatalogCoin { id: string; sym: string; name: string }
+interface CoinPick { id: string; sym: string; name: string; image?: string }
 
-const CATALOG: CatalogCoin[] = [
+/* Accesos rápidos (las más consultadas) — el buscador de abajo llega a
+   cualquier otra moneda que exista en CoinGecko, no solo a estas */
+const POPULAR: CoinPick[] = [
   { id: 'bitcoin', sym: 'BTC', name: 'Bitcoin' }, { id: 'ethereum', sym: 'ETH', name: 'Ethereum' },
-  { id: 'tether', sym: 'USDT', name: 'Tether' }, { id: 'usd-coin', sym: 'USDC', name: 'USD Coin' },
-  { id: 'binancecoin', sym: 'BNB', name: 'BNB' }, { id: 'solana', sym: 'SOL', name: 'Solana' },
+  { id: 'solana', sym: 'SOL', name: 'Solana' }, { id: 'binancecoin', sym: 'BNB', name: 'BNB' },
   { id: 'ripple', sym: 'XRP', name: 'XRP' }, { id: 'cardano', sym: 'ADA', name: 'Cardano' },
-  { id: 'dogecoin', sym: 'DOGE', name: 'Dogecoin' }, { id: 'polkadot', sym: 'DOT', name: 'Polkadot' },
-  { id: 'tron', sym: 'TRX', name: 'TRON' }, { id: 'chainlink', sym: 'LINK', name: 'Chainlink' },
-  { id: 'litecoin', sym: 'LTC', name: 'Litecoin' }, { id: 'shiba-inu', sym: 'SHIB', name: 'Shiba Inu' },
-  { id: 'bitcoin-cash', sym: 'BCH', name: 'Bitcoin Cash' }, { id: 'uniswap', sym: 'UNI', name: 'Uniswap' },
-  { id: 'stellar', sym: 'XLM', name: 'Stellar' }, { id: 'avalanche-2', sym: 'AVAX', name: 'Avalanche' },
-  { id: 'monero', sym: 'XMR', name: 'Monero' }, { id: 'cosmos', sym: 'ATOM', name: 'Cosmos' },
-  { id: 'near', sym: 'NEAR', name: 'NEAR Protocol' }, { id: 'aptos', sym: 'APT', name: 'Aptos' },
-  { id: 'arbitrum', sym: 'ARB', name: 'Arbitrum' }, { id: 'optimism', sym: 'OP', name: 'Optimism' },
-  { id: 'internet-computer', sym: 'ICP', name: 'Internet Computer' }, { id: 'hedera-hashgraph', sym: 'HBAR', name: 'Hedera' },
-  { id: 'filecoin', sym: 'FIL', name: 'Filecoin' }, { id: 'dai', sym: 'DAI', name: 'Dai' },
-  { id: 'pepe', sym: 'PEPE', name: 'Pepe' }, { id: 'the-open-network', sym: 'TON', name: 'Toncoin' },
+  { id: 'dogecoin', sym: 'DOGE', name: 'Dogecoin' }, { id: 'tron', sym: 'TRX', name: 'TRON' },
 ];
+
+/* v019 — Buscador de monedas: cualquier moneda de CoinGecko por símbolo o
+   nombre. Se usa tanto para "añadir a mi portafolio" como para alertas. */
+function CoinPicker({ placeholder, onPick }: { placeholder: string; onPick: (c: CoinPick) => void }) {
+  const [q, setQ] = useState('');
+  const [results, setResults] = useState<CoinPick[]>([]);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (q.trim().length < 2) { setResults([]); setLoading(false); return; }
+    setLoading(true);
+    const t = setTimeout(() => {
+      fetch(`/api/crypto/search?q=${encodeURIComponent(q)}`, { cache: 'no-store' })
+        .then(r => r.json())
+        .then(d => setResults(d.ok ? d.results || [] : []))
+        .catch(() => setResults([]))
+        .finally(() => setLoading(false));
+    }, 350);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  const pick = (c: CoinPick) => { onPick(c); setQ(''); setResults([]); setOpen(false); };
+
+  return (
+    <div className="coinpicker" ref={boxRef}>
+      <input
+        value={q}
+        onChange={e => { setQ(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 180)}
+        placeholder={placeholder}
+        style={{ width: '100%', background: 'var(--inputbg)', border: '1px solid var(--line)', borderRadius: 11, padding: 9, color: 'var(--text)', fontSize: 11 }}
+      />
+      {open && q.trim().length >= 2 && (
+        <div className="coinpicker-menu">
+          {loading && <div className="coinpicker-empty">Buscando en CoinGecko…</div>}
+          {!loading && !results.length && <div className="coinpicker-empty">Sin resultados para “{q}”.</div>}
+          {!loading && results.map(c => (
+            <div key={c.id} className="coinpicker-item" onMouseDown={() => pick(c)}>
+              <CoinAvatar id={c.id} sym={c.sym} image={c.image} />
+              <div><b style={{ fontSize: 11 }}>{c.name}</b><br /><span className="muted" style={{ fontSize: 10 }}>{c.sym}</span></div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function CriptoView() {
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [total, setTotal] = useState(0);
   const [chgUSD, setChgUSD] = useState(0);
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [rows, setRows] = useState<{ id: string; sym: string; name: string; price: number; chg: number; spark: number[] }[]>([]);
+  const [rows, setRows] = useState<{ id: string; sym: string; name: string; price: number; chg: number; spark: number[]; image?: string }[]>([]);
   const [ts, setTs] = useState(0);
   const [live, setLive] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [editVal, setEditVal] = useState('');
-  const [addId, setAddId] = useState('');
-  const [aCoin, setACoin] = useState('bitcoin');
+  const [addMsg, setAddMsg] = useState('');
+  const [aCoin, setACoin] = useState<CoinPick | null>(null);
   const [aDir, setADir] = useState('above');
   const [aPrice, setAPrice] = useState('');
 
@@ -63,10 +107,10 @@ export function CriptoView() {
 
   useEffect(() => { void load(); }, [load]);
 
-  const addCoin = async () => {
-    if (!addId) return;
-    await fetch('/api/holdings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ coinId: addId, amt: 0 }) });
-    setAddId('');
+  const addCoin = async (c: CoinPick) => {
+    await fetch('/api/holdings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ coinId: c.id, sym: c.sym, name: c.name, amt: 0 }) });
+    setAddMsg(`${c.name} añadida ✓ — ponle la cantidad que tienes en la tabla de abajo`);
+    setTimeout(() => setAddMsg(''), 3500);
     void load();
   };
   const saveAmt = async (coinId: string) => {
@@ -81,9 +125,10 @@ export function CriptoView() {
   };
   const addAlert = async () => {
     const p = parseFloat(aPrice);
-    if (!(p > 0)) return;
-    await fetch('/api/alerts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ coinId: aCoin, dir: aDir, price: p, sym: aCoin.toUpperCase().slice(0, 4) }) });
+    if (!(p > 0) || !aCoin) return;
+    await fetch('/api/alerts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ coinId: aCoin.id, dir: aDir, price: p, sym: aCoin.sym }) });
     setAPrice('');
+    setACoin(null);
     void load();
   };
   const rearm = async (id: string) => {
@@ -98,11 +143,11 @@ export function CriptoView() {
   const sorted = [...rows].sort((a, b) => b.chg - a.chg);
   const best = sorted.slice(0, 3), worst = sorted.slice(-3).reverse();
   const pct = total - chgUSD ? (chgUSD / (total - chgUSD)) * 100 : 0;
-  const remaining = CATALOG.filter(c => !holdings.some(h => h.coinId === c.id));
+  const popularLeft = POPULAR.filter(c => !holdings.some(h => h.coinId === c.id));
 
   const moverRow = (r: typeof rows[number]) => (
     <div className="row" key={r.id}>
-      <CoinAvatar id={r.id} sym={r.sym} />
+      <CoinAvatar id={r.id} sym={r.sym} image={r.image} />
       <div className="grow"><b>{r.name}</b><small>{money2(r.price)}</small></div>
       <span className={`tag ${r.chg >= 0 ? '' : 'red'}`}>{r.chg >= 0 ? '↑' : '↓'} {Math.abs(r.chg).toFixed(2)}%</span>
     </div>
@@ -160,7 +205,7 @@ export function CriptoView() {
               const up = (h.chg || 0) >= 0;
               return (
                 <tr key={h.id}>
-                  <td><div style={{ display: 'flex', gap: 9, alignItems: 'center' }}><CoinAvatar id={h.coinId} sym={h.sym} /><div><b>{h.name}</b><br /><span className="muted">{h.sym}</span></div></div></td>
+                  <td><div style={{ display: 'flex', gap: 9, alignItems: 'center' }}><CoinAvatar id={h.coinId} sym={h.sym} image={h.image} /><div><b>{h.name}</b><br /><span className="muted">{h.sym}</span></div></div></td>
                   <td>{h.price != null ? money2(h.price) : <span className="muted">—</span>}</td>
                   <td className={h.price != null ? (up ? 'up' : 'down') : 'muted'}>{h.chg != null ? `${up ? '↑' : '↓'} ${Math.abs(h.chg).toFixed(2)}%` : '—'}</td>
                   <td><Spark points={h.spark} up={up} /></td>
@@ -191,36 +236,45 @@ export function CriptoView() {
 
       <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', marginTop: 12 }}>
         <article className="card">
-          <div className="cardhead"><h3>Añadir moneda</h3><span className="muted">{remaining.length} DISPONIBLES</span></div>
+          <div className="cardhead"><h3>Añadir moneda</h3><span className="muted">CUALQUIERA DE COINGECKO</span></div>
           <div className="panelbody">
             <div className="field">
-              <label>Moneda</label>
-              <select value={addId} onChange={e => setAddId(e.target.value)}>
-                <option value="">Elige una moneda…</option>
-                {remaining.map(c => <option key={c.id} value={c.id}>{c.name} · {c.sym}</option>)}
-              </select>
+              <label>Busca por nombre o símbolo (ej. “pepe”, “aave”, “worldcoin”…)</label>
+              <CoinPicker placeholder="Escribe para buscar…" onPick={c => void addCoin(c)} />
             </div>
-            <button className="button green" style={{ width: '100%' }} onClick={() => void addCoin()}>＋ Añadir a mi lista</button>
+            {addMsg && <div style={{ marginTop: 8 }}><span className="tag">{addMsg}</span></div>}
+            {popularLeft.length > 0 && (
+              <div style={{ marginTop: 12 }}>
+                <span className="muted" style={{ fontSize: 10 }}>ACCESOS RÁPIDOS</span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                  {popularLeft.map(c => (
+                    <button key={c.id} className="button" style={{ fontSize: 10, padding: '6px 10px' }} onClick={() => void addCoin(c)}>
+                      + {c.sym}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </article>
         <article className="card">
           <div className="cardhead"><h3>Alertas de precio</h3><span className="muted">{alerts.filter(a => a.on && !a.fired).length} ACTIVAS</span></div>
           <div className="panelbody">
-            <div className="formrow">
-              <select value={aCoin} onChange={e => setACoin(e.target.value)} style={{ flex: 1.2, background: 'var(--inputbg)', border: '1px solid var(--line)', borderRadius: 11, padding: 9, color: 'var(--text)', fontSize: 11 }}>
-                {CATALOG.map(c => <option key={c.id} value={c.id}>{c.sym}</option>)}
-              </select>
+            <div className="formrow" style={{ alignItems: 'flex-start' }}>
+              <div style={{ flex: 1.4 }}>
+                <CoinPicker placeholder={aCoin ? `${aCoin.name} (${aCoin.sym})` : 'Elige una moneda…'} onPick={c => setACoin(c)} />
+              </div>
               <select value={aDir} onChange={e => setADir(e.target.value)} style={{ flex: 1, background: 'var(--inputbg)', border: '1px solid var(--line)', borderRadius: 11, padding: 9, color: 'var(--text)', fontSize: 11 }}>
                 <option value="above">≥ sube por</option>
                 <option value="below">≤ baja por</option>
               </select>
               <input value={aPrice} onChange={e => setAPrice(e.target.value)} type="number" step="any" min="0" placeholder="USD" style={{ flex: 1, background: 'var(--inputbg)', border: '1px solid var(--line)', borderRadius: 11, padding: 9, color: 'var(--text)', fontSize: 11 }} />
-              <button className="button green" style={{ padding: '9px 12px' }} onClick={() => void addAlert()}>＋</button>
+              <button className="button green" style={{ padding: '9px 12px' }} disabled={!aCoin} onClick={() => void addAlert()}>＋</button>
             </div>
             <div style={{ marginTop: 8, maxHeight: 240, overflowY: 'auto' }}>
               {alerts.length ? alerts.map(a => (
                 <div className="alertrow" key={a.id}>
-                  <CoinAvatar id={a.coinId} sym={a.sym} />
+                  <CoinAvatar id={a.coinId} sym={a.sym} image={a.image} />
                   <div className="grow">
                     <b>{a.sym}</b> {a.dir === 'above' ? 'sube por encima de' : 'baja por debajo de'} <b>{money2(a.price)}</b>
                     <br /><small className="muted">{a.fired ? `Activada ${a.firedAt ? fmtAge(a.firedAt) : ''} — reármala para volver a vigilar` : 'El agente vigila el mercado 24/7'}</small>

@@ -11,7 +11,7 @@ export async function GET() {
     ok: true,
     alerts: alerts.map(a => {
       const r = rows.find(x => x.id === a.coinId);
-      return { ...a, currentPrice: r?.price ?? null, chg: r?.chg ?? null };
+      return { ...a, currentPrice: r?.price ?? null, chg: r?.chg ?? null, image: r?.image || '' };
     }),
   });
 }

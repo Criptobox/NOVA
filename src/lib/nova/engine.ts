@@ -9,7 +9,7 @@ import { db } from '@/lib/db';
 import { getSettings } from './settings';
 import { rateCheck, withinHours, shouldNoticeOutOfHours } from './guard';
 import { ensureContact, saveMessage, deliverTo, notifyOwner, systemNote, type DeliverOpts } from './notify';
-import { CATALOG, findCoin, getPrices, money, money2, fmtAmt, symOf, nameOf, priceOf } from './prices';
+import { CATALOG, findCoin, resolveCoin, getPrices, money, money2, fmtAmt, symOf, nameOf, priceOf } from './prices';
 import { aiReply, transcribeAudio, describeImage } from './ai';
 import { waMode, fetchWaMedia } from './whatsapp';
 import { parseFxIntent, convertCurrency, formatFxReply } from './fx';
@@ -158,7 +158,7 @@ async function replyResumen(): Promise<string> {
 
 /* ---------- Alertas ---------- */
 async function createAlert(text: string, createdBy?: string): Promise<string> {
-  const coin = findCoin(text.replace(/alerta|vigila|avisa/gi, ' '));
+  const coin = await resolveCoin(text.replace(/alerta|vigila|avisa/gi, ' '));
   const numMatch = text.match(/([\d][\d.,]*)/);
   if (!coin || !numMatch) return 'No entendí la alerta. Ejemplos: "alerta eth >= 4000", "alerta bitcoin por debajo de 90000".';
   const price = parseFloat(numMatch[1].replace(/,/g, ''));
@@ -406,8 +406,8 @@ export async function processInbound(msg: InboundMessage): Promise<EngineResult>
     }
   } else if (/^(precio|cu[aá]nto|cotizaci[oó]n|valor)/.test(t) || /precio de|cuanto vale|cuánto vale/.test(t)) {
     intent = 'precio';
-    const coin = findCoin(t);
-    reply = coin ? await replyPrecio(coin) : 'Dime qué moneda, por ejemplo: "precio btc". Catálogo: btc, eth, sol, ada, xrp, bnb y más.';
+    const coin = await resolveCoin(t);
+    reply = coin ? await replyPrecio(coin) : 'Dime qué moneda, por ejemplo: "precio btc" o "precio pepe" — reconozco cualquier moneda de CoinGecko.';
   } else if (/(^| )(top|mejores|suben)( |$)|top \d+/.test(t)) {
     intent = 'top';
     reply = await replyTop();

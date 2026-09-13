@@ -1,6 +1,15 @@
-# NOVA v018 — Agente WhatsApp + Cripto + Tienda + Trading (PWA)
+# NOVA v019 — Agente WhatsApp + Cripto + Tienda + Trading (PWA)
 
 NOVA es un agente inteligente que **atiende usuarios por WhatsApp** usando la **API oficial de Meta (Cloud API)** — la vía **100% gratis para responder a tus usuarios (mensajes de servicio) y sin riesgo de baneo** — con seguimiento de criptomonedas en vivo, **control por voz de tu tienda TiendaMax**, **trading automatizado en modo simulación**, alertas de precio, recordatorios, notas de voz, análisis de imágenes, **modo offline con comandos locales** y un **dashboard PWA instalable** con el cerebro neuronal de NOVA.
+
+## Novedades v019 (sobre v018) — Logos reales + añade CUALQUIER moneda
+
+| # | Mejora | Detalle |
+|---|--------|----------|
+| 1 | **Logos originales** | Cada moneda muestra su logo real (CDN de CoinGecko) en vez del círculo de color con letras: portafolio, mejores/peores 24 h, alertas y la vista Inicio. Si la imagen no carga (sin conexión, moneda rarísima) cae al círculo de color de siempre — nunca queda un hueco |
+| 2 | **Añade cualquier moneda** | "Añadir moneda" y "Alertas de precio" ya no están limitados al catálogo de 30: un buscador en vivo consulta las ~17.000 monedas de CoinGecko por nombre o símbolo (nuevo endpoint `/api/crypto/search`) y la añade con su logo real |
+| 3 | **Los precios siguen a lo que añadas** | En cuanto guardas una moneda en tu portafolio o en una alerta, el refresco de precios (cada 60 s) la incluye automáticamente, esté o no en el catálogo curado — antes se quedaba para siempre en "—" |
+| 4 | **"Precio X" por WhatsApp reconoce cualquier moneda** | Si no está en el catálogo local, NOVA la busca en CoinGecko al momento (p. ej. "precio worldcoin") |
 
 ## Novedades v018 (sobre v017) — Seguridad: el panel ya no está abierto a cualquiera
 
@@ -295,6 +304,7 @@ public/                       # manifest.webmanifest, sw.js (nova-v011), iconos 
 - **v016** — Autocuración total: tablas creadas en runtime, todos los nombres de variables de Vercel reconocidos, build sin BD y sin avisos, botón Reintentar en la banda.
 - **v017** — Página de cortesía para sandboxes estáticos (`public/index.html`) + licencia MIT. Los «errores» de analizadores de webs estáticas quedan explicados y en su mayoría desaparecen.
 - **v018** — Seguridad: panel protegido por contraseña (`ADMIN_PASSWORD`), verificación de firma en los webhooks de WhatsApp (App Secret), secretos ya no viajan en claro por la API, sin clave de cifrado de respaldo débil, comparaciones a prueba de temporización, candado por símbolo en el motor de trading contra condiciones de carrera.
+- **v019** — Logos originales de cada moneda (CoinGecko) y buscador para añadir CUALQUIER moneda (portafolio, alertas y "precio X" por WhatsApp), no solo el catálogo curado de 30.
 ## Novedades v016 (sobre v015) — La base de datos se cura SOLA
 
 Si conectaste Vercel Postgres y el aviso ámbar seguía: esta versión elimina de raíz TODAS las causas posibles, sin que tengas que tocar nada más:

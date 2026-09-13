@@ -1,12 +1,13 @@
 'use client';
 
 /* NOVA v006 — utilidades visuales compartidas + descarga CSV */
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Icon } from './Icon';
 
 export interface CoinRow {
   id: string; sym: string; name: string; price: number; chg: number;
-  spark: number[]; cap: number;
+  spark: number[]; cap: number; image?: string;
 }
 
 export const PALETTE = ['#f7931a', '#627eea', '#9945ff', '#2a5ada', '#c2a633', '#e6007a', '#26a17b', '#8247e5', '#edc716', '#0ea5e9', '#f43f5e', '#22c55e', '#a855f7', '#f97316', '#14b8a6', '#eab308'];
@@ -17,9 +18,28 @@ export function coinColor(id: string): string {
   return PALETTE[h % PALETTE.length];
 }
 
-export function CoinAvatar({ id, sym }: { id: string; sym?: string }) {
+/* v019 — Logo real de la moneda (CDN de CoinGecko, viene en la propia
+   respuesta de precios). Si la imagen no carga (sin conexión, id raro,
+   moneda recién añadida cuyo precio aún no se refrescó) cae al glifo de
+   color de siempre — nunca queda un hueco vacío. */
+export function CoinAvatar({ id, sym, image }: { id: string; sym?: string; image?: string | null }) {
+  const [broken, setBroken] = useState(false);
   const s = sym || id.slice(0, 3).toUpperCase();
   const glyph = s === 'BTC' ? '₿' : s === 'ETH' ? 'Ξ' : s.slice(0, 3);
+  if (image && !broken) {
+    return (
+      <img
+        src={image}
+        alt={s}
+        width={30}
+        height={30}
+        className="coinav"
+        style={{ objectFit: 'cover', background: 'var(--soft)' }}
+        loading="lazy"
+        onError={() => setBroken(true)}
+      />
+    );
+  }
   return <div className="coinav" style={{ background: coinColor(id) }}>{glyph}</div>;
 }
 

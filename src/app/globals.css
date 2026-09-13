@@ -381,6 +381,12 @@ linear-gradient(145deg,rgba(7,21,39,.92),rgba(2,9,19,.92))}
 
 /* ---------- Cripto ---------- */
 .nova-app .coinav{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:800;color:#fff;flex:none;border:1px solid rgba(255,255,255,.22);letter-spacing:.3px}
+/* v019 — buscador de monedas (añadir a portafolio / alertas): cualquier moneda de CoinGecko */
+.nova-app .coinpicker{position:relative}
+.nova-app .coinpicker-menu{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:30;max-height:260px;overflow-y:auto;border-radius:14px;border:1px solid rgba(102,166,255,.18);background:linear-gradient(160deg,rgba(13,29,52,.97),rgba(4,13,27,.97));box-shadow:0 14px 32px rgba(2,8,20,.5)}
+.nova-app .coinpicker-item{display:flex;align-items:center;gap:9px;padding:9px 11px;cursor:pointer;transition:background .12s ease}
+.nova-app .coinpicker-item:hover{background:rgba(76,139,255,.14)}
+.nova-app .coinpicker-empty{padding:11px;font-size:11px;color:var(--muted)}
 .nova-app .sparkline{width:92px;height:26px;display:block}
 .nova-app .sparkline polyline{fill:none;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
 .nova-app .alertrow{display:flex;gap:8px;align-items:center;padding:9px 2px;border-bottom:1px solid rgba(255,255,255,.05);font-size:10px}
@@ -624,6 +630,8 @@ html[data-theme="light"] .nova-app .pill.off{border-color:rgba(168,110,8,.45);co
 
 /* ---- tarjetas blancas redondeadas ---- */
 html[data-theme="light"] .nova-app .card{background:#fff;border:1px solid rgba(20,24,34,.05);border-radius:22px;box-shadow:0 10px 28px rgba(24,28,45,.08)}
+html[data-theme="light"] .nova-app .coinpicker-menu{background:#fff;border-color:rgba(20,24,34,.08);box-shadow:0 12px 28px rgba(24,28,45,.12)}
+html[data-theme="light"] .nova-app .coinpicker-item:hover{background:rgba(45,108,223,.08)}
 html[data-theme="light"] .nova-app .card:before{display:none}
 html[data-theme="light"] .nova-app .card:hover{transform:translateY(-2px);border-color:rgba(45,108,223,.22);box-shadow:0 16px 36px rgba(24,28,45,.13)}
 html[data-theme="light"] .nova-app .cardhead{border-bottom:1px solid rgba(20,24,34,.07)}
