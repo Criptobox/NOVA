@@ -127,7 +127,7 @@ async function replyPortafolio(): Promise<string> {
   if (!rows.length) return 'Ahora mismo no puedo consultar precios en vivo, así que no puedo valorar tu portafolio con datos reales. Prueba en unos minutos 🙏';
   const holds = await db.holding.findMany();
   if (!holds.length) return 'Tu portafolio está vacío. Dime por ejemplo: "vigila sol" y lo agrego, o gestionalo desde el dashboard.';
-  let total = 0, chgUSD = 0;
+  let total = 0, chgUSD = 0, totalCost = 0, hasCost = false;
   const lines: string[] = [];
   for (const h of holds) {
     const r = rows.find(x => x.id === h.coinId);
@@ -135,10 +135,19 @@ async function replyPortafolio(): Promise<string> {
     const v = h.amt * r.price;
     total += v;
     chgUSD += v * (r.chg / 100);
-    lines.push(`• *${h.sym}* ${fmtAmt(h.amt)} ≈ ${money(v)} (${r.chg >= 0 ? '+' : ''}${r.chg.toFixed(1)}%)`);
+    let line = `• *${h.sym}* ${fmtAmt(h.amt)} ≈ ${money(v)} (${r.chg >= 0 ? '+' : ''}${r.chg.toFixed(1)}%)`;
+    if (h.avgCost > 0) {
+      hasCost = true;
+      const cost = h.amt * h.avgCost;
+      totalCost += cost;
+      const pnl = v - cost;
+      line += ` · ganancia ${pnl >= 0 ? '+' : '−'}${money(Math.abs(pnl))}`;
+    }
+    lines.push(line);
   }
   const pct = total - chgUSD ? (chgUSD / (total - chgUSD)) * 100 : 0;
-  return `💼 *Tu portafolio: ~${money(total)}*\n${lines.join('\n')}\n\n24 h: ${chgUSD >= 0 ? '🟢 +' : '🔴 −'}${money(Math.abs(chgUSD)).slice(1)} (${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%)`;
+  const pnlLine = hasCost && totalCost > 0 ? `\nGanancia total: ${total - totalCost >= 0 ? '🟢 +' : '🔴 −'}${money(Math.abs(total - totalCost)).slice(1)} (${(((total - totalCost) / totalCost) * 100).toFixed(2)}%)` : '';
+  return `💼 *Tu portafolio: ~${money(total)}*\n${lines.join('\n')}\n\n24 h: ${chgUSD >= 0 ? '🟢 +' : '🔴 −'}${money(Math.abs(chgUSD)).slice(1)} (${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%)${pnlLine}`;
 }
 
 async function replyResumen(): Promise<string> {

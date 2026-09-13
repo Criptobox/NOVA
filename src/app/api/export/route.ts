@@ -43,12 +43,17 @@ export async function GET(req: NextRequest) {
     const rows = holdings.map(h => {
       const p = prices.rows.find(r => r.id === h.coinId) || null;
       const price = p?.price ?? 0;
-      return [h.coinId, h.sym, h.name, h.amt, price, +(h.amt * price).toFixed(2), p?.chg ?? ''];
+      const value = +(h.amt * price).toFixed(2);
+      const costBasis = h.avgCost > 0 ? +(h.amt * h.avgCost).toFixed(2) : '';
+      const pnl = h.avgCost > 0 ? +(value - h.amt * h.avgCost).toFixed(2) : '';
+      return [h.coinId, h.sym, h.name, h.amt, h.avgCost || '', price, value, costBasis, pnl, p?.chg ?? ''];
     });
-    const total = rows.reduce((a, r) => a + (r[5] as number), 0);
-    rows.push(['TOTAL', '', '', '', '', +total.toFixed(2), '']);
+    const total = rows.reduce((a, r) => a + (r[6] as number), 0);
+    const totalCost = rows.reduce((a, r) => a + (typeof r[7] === 'number' ? r[7] : 0), 0);
+    const totalPnl = rows.some(r => r[8] !== '') ? +(total - totalCost).toFixed(2) : '';
+    rows.push(['TOTAL', '', '', '', '', '', +total.toFixed(2), totalCost ? +totalCost.toFixed(2) : '', totalPnl, '']);
     const csv = toCsv(
-      ['id_moneda', 'simbolo', 'nombre', 'cantidad', 'precio_usd', 'valor_usd', 'cambio_24h_pct'],
+      ['id_moneda', 'simbolo', 'nombre', 'cantidad', 'costo_compra_usd', 'precio_actual_usd', 'valor_usd', 'costo_total_usd', 'ganancia_usd', 'cambio_24h_pct'],
       rows,
     );
     return csvResponse(`nova-portafolio-${stamp()}.csv`, csv);

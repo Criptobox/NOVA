@@ -9,8 +9,9 @@ import { CoinAvatar, Spark, money, money2, fmtAmt, fmtAge, CsvButton } from './u
 import { cache } from '@/lib/nova/offline';
 
 interface Holding {
-  id: string; coinId: string; sym: string; name: string; amt: number;
+  id: string; coinId: string; sym: string; name: string; amt: number; avgCost: number;
   price: number | null; chg: number | null; spark: number[]; value: number | null; image?: string;
+  costBasis: number | null; pnl: number | null; pnlPct: number | null;
 }
 interface Alert {
   id: string; coinId: string; sym: string; dir: string; price: number; on: boolean;
@@ -81,13 +82,19 @@ export function CriptoView() {
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [total, setTotal] = useState(0);
   const [chgUSD, setChgUSD] = useState(0);
+  const [totalPnl, setTotalPnl] = useState<number | null>(null);
+  const [totalPnlPct, setTotalPnlPct] = useState<number | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [rows, setRows] = useState<{ id: string; sym: string; name: string; price: number; chg: number; spark: number[]; image?: string }[]>([]);
   const [ts, setTs] = useState(0);
   const [live, setLive] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
-  const [editVal, setEditVal] = useState('');
+  const [editAmt, setEditAmt] = useState('');
+  const [editCost, setEditCost] = useState('');
   const [addMsg, setAddMsg] = useState('');
+  const [pending, setPending] = useState<CoinPick | null>(null);
+  const [pendAmt, setPendAmt] = useState('');
+  const [pendCost, setPendCost] = useState('');
   const [aCoin, setACoin] = useState<CoinPick | null>(null);
   const [aDir, setADir] = useState('above');
   const [aPrice, setAPrice] = useState('');
@@ -99,7 +106,11 @@ export function CriptoView() {
         fetch('/api/alerts', { cache: 'no-store' }).then(r => r.json()),
         fetch('/api/crypto/prices', { cache: 'no-store' }).then(r => r.json()),
       ]);
-      if (rh.ok) { setHoldings(rh.holdings || []); setTotal(rh.total || 0); setChgUSD(rh.chgUSD || 0); cache.holdings((rh.holdings || []).map((h: { coinId: string; sym: string; amt: number }) => ({ coinId: h.coinId, sym: h.sym, amt: h.amt }))); } // v010: snapshot offline
+      if (rh.ok) {
+        setHoldings(rh.holdings || []); setTotal(rh.total || 0); setChgUSD(rh.chgUSD || 0);
+        setTotalPnl(rh.totalPnl ?? null); setTotalPnlPct(rh.totalPnlPct ?? null);
+        cache.holdings((rh.holdings || []).map((h: { coinId: string; sym: string; amt: number }) => ({ coinId: h.coinId, sym: h.sym, amt: h.amt }))); // v010: snapshot offline
+      }
       if (ra.ok) setAlerts(ra.alerts || []);
       if (rp.ok) { setRows(rp.rows || []); setTs(rp.ts || 0); setLive(!!rp.live); }
     } catch { /* silencioso */ }
@@ -107,15 +118,31 @@ export function CriptoView() {
 
   useEffect(() => { void load(); }, [load]);
 
-  const addCoin = async (c: CoinPick) => {
-    await fetch('/api/holdings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ coinId: c.id, sym: c.sym, name: c.name, amt: 0 }) });
-    setAddMsg(`${c.name} añadida ✓ — ponle la cantidad que tienes en la tabla de abajo`);
-    setTimeout(() => setAddMsg(''), 3500);
+  /* v020 — Añadir moneda pide cantidad y, opcionalmente, el costo de compra
+     (USD/unidad) para poder calcular la ganancia o pérdida real. */
+  const startAdd = (c: CoinPick) => { setPending(c); setPendAmt(''); setPendCost(''); };
+  const cancelAdd = () => { setPending(null); setPendAmt(''); setPendCost(''); };
+  const confirmAdd = async () => {
+    if (!pending) return;
+    const amt = parseFloat(pendAmt);
+    const cost = parseFloat(pendCost);
+    const body: Record<string, unknown> = { coinId: pending.id, sym: pending.sym, name: pending.name, amt: isNaN(amt) ? 0 : amt };
+    if (pendCost.trim() !== '' && !isNaN(cost) && cost >= 0) body.avgCost = cost;
+    await fetch('/api/holdings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    setAddMsg(`${pending.name} añadida ✓`);
+    setTimeout(() => setAddMsg(''), 3000);
+    setPending(null); setPendAmt(''); setPendCost('');
     void load();
   };
-  const saveAmt = async (coinId: string) => {
-    const v = parseFloat(editVal);
-    await fetch('/api/holdings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ coinId, amt: isNaN(v) ? 0 : v }) });
+  const startEdit = (h: Holding) => { setEditing(h.coinId); setEditAmt(String(h.amt)); setEditCost(h.avgCost > 0 ? String(h.avgCost) : ''); };
+  const cancelEdit = () => { setEditing(null); setEditAmt(''); setEditCost(''); };
+  const saveEdit = async () => {
+    if (!editing) return;
+    const amt = parseFloat(editAmt);
+    const cost = parseFloat(editCost);
+    const body: Record<string, unknown> = { coinId: editing, amt: isNaN(amt) ? 0 : amt };
+    if (editCost.trim() !== '' && !isNaN(cost) && cost >= 0) body.avgCost = cost;
+    await fetch('/api/holdings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     setEditing(null);
     void load();
   };
@@ -171,6 +198,13 @@ export function CriptoView() {
           <div className="panelbody">
             <div style={{ fontSize: 27, fontWeight: 800 }}>{rows.length ? money(total) : '—'}</div>
             <div className="muted">24 h: <b className={chgUSD >= 0 ? 'up' : 'down'}>{chgUSD >= 0 ? '+' : '−'}{money(Math.abs(chgUSD))}</b> ({pct >= 0 ? '+' : ''}{pct.toFixed(2)}%) · {holdings.length} monedas</div>
+            {totalPnl != null && (
+              <div className="muted" style={{ marginTop: 2 }}>
+                Ganancia total: <b className={totalPnl >= 0 ? 'up' : 'down'}>{totalPnl >= 0 ? '+' : '−'}{money(Math.abs(totalPnl))}</b>
+                {totalPnlPct != null && <> ({totalPnlPct >= 0 ? '+' : ''}{totalPnlPct.toFixed(2)}%)</>}
+                <span style={{ marginLeft: 4 }}>sobre lo invertido</span>
+              </div>
+            )}
             {!rows.length && <div className="tag red" style={{ display: 'inline-block', marginTop: 8 }}>Sin conexión con el mercado — no se muestran valores inventados</div>}
             <div style={{ marginTop: 10 }}>
               {holdings.filter(h => (h.value || 0) > 0).sort((a, b) => (b.value || 0) - (a.value || 0)).slice(0, 6).map(h => {
@@ -197,12 +231,14 @@ export function CriptoView() {
       </div>
 
       <article className="card" style={{ marginTop: 12 }}>
-        <div className="cardhead"><h3>Mis criptos ({holdings.length})</h3><span className="muted">TOCA ✎ PARA EDITAR LA CANTIDAD</span></div>
+        <div className="cardhead"><h3>Mis criptos ({holdings.length})</h3><span className="muted">TOCA ✎ PARA EDITAR CANTIDAD Y COSTO</span></div>
         <div className="tblwrap"><table className="tbl">
-          <thead><tr><th>Moneda</th><th>Precio</th><th>24 h</th><th>7 días</th><th>Tienes</th><th>Valor</th><th></th></tr></thead>
+          <thead><tr><th>Moneda</th><th>Precio</th><th>24 h</th><th>7 días</th><th>Tienes</th><th>Costo compra</th><th>Valor</th><th>Ganancia</th><th></th></tr></thead>
           <tbody>
             {holdings.length ? holdings.map(h => {
               const up = (h.chg || 0) >= 0;
+              const editRow = editing === h.coinId;
+              const pnlUp = (h.pnl || 0) >= 0;
               return (
                 <tr key={h.id}>
                   <td><div style={{ display: 'flex', gap: 9, alignItems: 'center' }}><CoinAvatar id={h.coinId} sym={h.sym} image={h.image} /><div><b>{h.name}</b><br /><span className="muted">{h.sym}</span></div></div></td>
@@ -210,26 +246,55 @@ export function CriptoView() {
                   <td className={h.price != null ? (up ? 'up' : 'down') : 'muted'}>{h.chg != null ? `${up ? '↑' : '↓'} ${Math.abs(h.chg).toFixed(2)}%` : '—'}</td>
                   <td><Spark points={h.spark} up={up} /></td>
                   <td>
-                    {editing === h.coinId ? (
+                    {editRow ? (
                       <input
                         className="amtinput"
                         type="number" step="any" min="0" autoFocus
-                        value={editVal}
-                        onChange={e => setEditVal(e.target.value)}
-                        onBlur={() => void saveAmt(h.coinId)}
-                        onKeyDown={e => { if (e.key === 'Enter') void saveAmt(h.coinId); }}
-                        style={{ width: 110, background: 'var(--inputbg)', border: '1px solid rgba(53,215,255,.5)', borderRadius: 8, padding: '6px 8px', color: 'var(--text)' }}
+                        value={editAmt}
+                        onChange={e => setEditAmt(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') void saveEdit(); if (e.key === 'Escape') cancelEdit(); }}
+                        style={{ width: 100, background: 'var(--inputbg)', border: '1px solid rgba(53,215,255,.5)', borderRadius: 8, padding: '6px 8px', color: 'var(--text)' }}
                       />
-                    ) : <span onClick={() => { setEditing(h.coinId); setEditVal(String(h.amt)); }} style={{ cursor: 'pointer' }}>{fmtAmt(h.amt)}</span>}
+                    ) : <span onClick={() => startEdit(h)} style={{ cursor: 'pointer' }}>{fmtAmt(h.amt)}</span>}
+                  </td>
+                  <td>
+                    {editRow ? (
+                      <input
+                        className="amtinput"
+                        type="number" step="any" min="0" placeholder="0 = sin costo"
+                        value={editCost}
+                        onChange={e => setEditCost(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') void saveEdit(); if (e.key === 'Escape') cancelEdit(); }}
+                        style={{ width: 100, background: 'var(--inputbg)', border: '1px solid rgba(53,215,255,.5)', borderRadius: 8, padding: '6px 8px', color: 'var(--text)' }}
+                      />
+                    ) : h.avgCost > 0 ? (
+                      <span onClick={() => startEdit(h)} style={{ cursor: 'pointer' }}>{money2(h.avgCost)}</span>
+                    ) : (
+                      <span onClick={() => startEdit(h)} className="muted" style={{ cursor: 'pointer' }}>— <small>poner</small></span>
+                    )}
                   </td>
                   <td><b>{h.value != null ? money(h.value) : '—'}</b></td>
+                  <td className={h.pnl != null ? (pnlUp ? 'up' : 'down') : 'muted'}>
+                    {h.pnl != null ? (
+                      <>{pnlUp ? '+' : '−'}{money(Math.abs(h.pnl))}{h.pnlPct != null && <><br /><small>({h.pnlPct >= 0 ? '+' : ''}{h.pnlPct.toFixed(2)}%)</small></>}</>
+                    ) : '—'}
+                  </td>
                   <td style={{ whiteSpace: 'nowrap' }}>
-                    <button className="button" onClick={() => { setEditing(h.coinId); setEditVal(String(h.amt)); }}>✎</button>{' '}
-                    <button className="button danger" onClick={() => void delCoin(h.coinId)}>×</button>
+                    {editRow ? (
+                      <>
+                        <button className="button green" onClick={() => void saveEdit()}>✓</button>{' '}
+                        <button className="button" onClick={cancelEdit}>✕</button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="button" onClick={() => startEdit(h)}>✎</button>{' '}
+                        <button className="button danger" onClick={() => void delCoin(h.coinId)}>×</button>
+                      </>
+                    )}
                   </td>
                 </tr>
               );
-            }) : <tr><td colSpan={7}><div className="empty">Tu lista está vacía. Añade monedas abajo.</div></td></tr>}
+            }) : <tr><td colSpan={9}><div className="empty">Tu lista está vacía. Añade monedas abajo.</div></td></tr>}
           </tbody>
         </table></div>
       </article>
@@ -240,15 +305,34 @@ export function CriptoView() {
           <div className="panelbody">
             <div className="field">
               <label>Busca por nombre o símbolo (ej. “pepe”, “aave”, “worldcoin”…)</label>
-              <CoinPicker placeholder="Escribe para buscar…" onPick={c => void addCoin(c)} />
+              <CoinPicker placeholder="Escribe para buscar…" onPick={startAdd} />
             </div>
             {addMsg && <div style={{ marginTop: 8 }}><span className="tag">{addMsg}</span></div>}
+            {pending && (
+              <div style={{ marginTop: 10, padding: 11, border: '1px solid var(--line)', borderRadius: 13, background: 'var(--soft)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}>
+                  <CoinAvatar id={pending.id} sym={pending.sym} image={pending.image} />
+                  <b style={{ fontSize: 12 }}>{pending.name} · {pending.sym}</b>
+                </div>
+                <div className="formgrid">
+                  <div className="field"><label>Cantidad que tienes</label>
+                    <input type="number" step="any" min="0" autoFocus value={pendAmt} onChange={e => setPendAmt(e.target.value)} placeholder="0" /></div>
+                  <div className="field"><label>Costo de compra (USD/unidad, opcional)</label>
+                    <input type="number" step="any" min="0" value={pendCost} onChange={e => setPendCost(e.target.value)} placeholder="Ej. 65000" /></div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <button className="button green" style={{ flex: 1 }} onClick={() => void confirmAdd()}>＋ Añadir a mi lista</button>
+                  <button className="button" onClick={cancelAdd}>Cancelar</button>
+                </div>
+                <p className="muted" style={{ fontSize: 10, marginTop: 7, marginBottom: 0 }}>El costo es opcional — si lo pones, verás tu ganancia o pérdida real en la tabla de abajo. Puedes editarlo cuando quieras.</p>
+              </div>
+            )}
             {popularLeft.length > 0 && (
               <div style={{ marginTop: 12 }}>
                 <span className="muted" style={{ fontSize: 10 }}>ACCESOS RÁPIDOS</span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
                   {popularLeft.map(c => (
-                    <button key={c.id} className="button" style={{ fontSize: 10, padding: '6px 10px' }} onClick={() => void addCoin(c)}>
+                    <button key={c.id} className="button" style={{ fontSize: 10, padding: '6px 10px' }} onClick={() => startAdd(c)}>
                       + {c.sym}
                     </button>
                   ))}

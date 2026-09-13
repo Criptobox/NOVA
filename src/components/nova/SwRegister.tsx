@@ -95,7 +95,7 @@ export function PushBell({ compact = false }: { compact?: boolean }) {
   );
 }
 
-export const NOVA_VERSION = 'v019';
+export const NOVA_VERSION = 'v020';
 
 export function SwRegister() {
   const [canInstall, setCanInstall] = useState(false);

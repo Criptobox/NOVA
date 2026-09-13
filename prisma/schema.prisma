@@ -60,6 +60,7 @@ model Holding {
   sym       String
   name      String
   amt       Float    @default(0)
+  avgCost   Float    @default(0) // v020: costo promedio de compra (USD/unidad) — 0 = sin registrar, no se muestra ganancia
   createdAt DateTime @default(now())
 }
 

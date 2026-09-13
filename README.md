@@ -1,6 +1,15 @@
-# NOVA v019 — Agente WhatsApp + Cripto + Tienda + Trading (PWA)
+# NOVA v020 — Agente WhatsApp + Cripto + Tienda + Trading (PWA)
 
 NOVA es un agente inteligente que **atiende usuarios por WhatsApp** usando la **API oficial de Meta (Cloud API)** — la vía **100% gratis para responder a tus usuarios (mensajes de servicio) y sin riesgo de baneo** — con seguimiento de criptomonedas en vivo, **control por voz de tu tienda TiendaMax**, **trading automatizado en modo simulación**, alertas de precio, recordatorios, notas de voz, análisis de imágenes, **modo offline con comandos locales** y un **dashboard PWA instalable** con el cerebro neuronal de NOVA.
+
+## Novedades v020 (sobre v019) — Ganancia real por moneda (costo de compra)
+
+| # | Mejora | Detalle |
+|---|--------|----------|
+| 1 | **Costo de compra al añadir** | El formulario de "añadir moneda" ahora pide, además de la cantidad, el costo de compra (USD/unidad) — opcional: si no lo pones, la moneda se añade igual, solo que sin calcular ganancia |
+| 2 | **Columna "Ganancia" en tu portafolio** | Cada fila de la tabla muestra ganancia o pérdida real en USD y en % (precio actual vs. tu costo), en verde o rojo. Editar solo la cantidad NUNCA borra el costo ya guardado |
+| 3 | **Ganancia total del portafolio** | La tarjeta "Mi portafolio" suma la ganancia de todas las monedas con costo registrado |
+| 4 | **También en WhatsApp y en el CSV** | "portafolio" por WhatsApp incluye la ganancia de cada moneda y el total; el CSV exportado trae columnas de costo de compra, costo total y ganancia |
 
 ## Novedades v019 (sobre v018) — Logos reales + añade CUALQUIER moneda
 
@@ -305,6 +314,7 @@ public/                       # manifest.webmanifest, sw.js (nova-v011), iconos 
 - **v017** — Página de cortesía para sandboxes estáticos (`public/index.html`) + licencia MIT. Los «errores» de analizadores de webs estáticas quedan explicados y en su mayoría desaparecen.
 - **v018** — Seguridad: panel protegido por contraseña (`ADMIN_PASSWORD`), verificación de firma en los webhooks de WhatsApp (App Secret), secretos ya no viajan en claro por la API, sin clave de cifrado de respaldo débil, comparaciones a prueba de temporización, candado por símbolo en el motor de trading contra condiciones de carrera.
 - **v019** — Logos originales de cada moneda (CoinGecko) y buscador para añadir CUALQUIER moneda (portafolio, alertas y "precio X" por WhatsApp), no solo el catálogo curado de 30.
+- **v020** — Costo de compra opcional al añadir una moneda y columna de ganancia/pérdida real (USD y %) en el portafolio, el resumen de WhatsApp y el CSV exportado.
 ## Novedades v016 (sobre v015) — La base de datos se cura SOLA
 
 Si conectaste Vercel Postgres y el aviso ámbar seguía: esta versión elimina de raíz TODAS las causas posibles, sin que tengas que tocar nada más:
