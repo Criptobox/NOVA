@@ -13,6 +13,7 @@ Una auditoría de seguridad encontró que **todo el panel y su API estaban compl
 | 3 | **Secretos ya no viajan en claro** | `GET /api/settings` devolvía el token de WhatsApp, el token de GitHub y la clave privada de Web Push completos en la respuesta. Ahora se enmascaran (o, en el caso de la clave privada de Push, ya no se envían nunca) |
 | 4 | **Clave de cifrado sin respaldo débil** | Las API keys del exchange se cifraban con una clave conocida y visible en este mismo código si `NOVA_CRYPT_KEY` no estaba configurada. Ahora, sin esa variable, NOVA rechaza guardar credenciales del exchange en vez de cifrarlas con una clave insegura |
 | 5 | **Comparaciones a prueba de temporización** | El `CRON_SECRET` y el verify token del webhook se comparaban con `===`, medible por temporización. Ahora usan comparación en tiempo constante |
+| 6 | **Sin condición de carrera en el trading** | Si el cron y un mensaje de WhatsApp evaluaban el mismo símbolo casi a la vez, ambos podían leer "sin posición abierta" o "cupo de operaciones libre" antes de que el primero registrara su operación, y abrir más posiciones de las configuradas (o cerrar la misma dos veces). Ahora un candado por símbolo (`pg_advisory_xact_lock`) serializa esas evaluaciones — verificado con una prueba de concurrencia real contra Postgres |
 
 **Qué hacer si ya tenías NOVA desplegado:** añade `ADMIN_PASSWORD` (una contraseña fuerte) en Vercel → Settings → Environment Variables y haz Redeploy — a partir de ahí el panel te pedirá esa contraseña. Si usas WhatsApp real, pega también el **App Secret** de tu app de Meta en Ajustes → Conexión WhatsApp para que NOVA verifique que los mensajes vienen de verdad de Meta. Si guardaste credenciales del exchange (Binance) sin tener `NOVA_CRYPT_KEY` configurada, vuelve a pegarlas una vez que la variable esté puesta.
 
@@ -293,7 +294,7 @@ public/                       # manifest.webmanifest, sw.js (nova-v011), iconos 
 - **v015** — El aviso distingue la causa exacta (no conectada / URL inválida / no responde / faltan tablas) y el build usaba la URL directa para el `db push`.
 - **v016** — Autocuración total: tablas creadas en runtime, todos los nombres de variables de Vercel reconocidos, build sin BD y sin avisos, botón Reintentar en la banda.
 - **v017** — Página de cortesía para sandboxes estáticos (`public/index.html`) + licencia MIT. Los «errores» de analizadores de webs estáticas quedan explicados y en su mayoría desaparecen.
-- **v018** — Seguridad: panel protegido por contraseña (`ADMIN_PASSWORD`), verificación de firma en los webhooks de WhatsApp (App Secret), secretos ya no viajan en claro por la API, sin clave de cifrado de respaldo débil, comparaciones a prueba de temporización.
+- **v018** — Seguridad: panel protegido por contraseña (`ADMIN_PASSWORD`), verificación de firma en los webhooks de WhatsApp (App Secret), secretos ya no viajan en claro por la API, sin clave de cifrado de respaldo débil, comparaciones a prueba de temporización, candado por símbolo en el motor de trading contra condiciones de carrera.
 ## Novedades v016 (sobre v015) — La base de datos se cura SOLA
 
 Si conectaste Vercel Postgres y el aviso ámbar seguía: esta versión elimina de raíz TODAS las causas posibles, sin que tengas que tocar nada más:

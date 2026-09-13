@@ -9,10 +9,32 @@
    el dueño apaga la simulación explícitamente en el panel.
    Cada operación queda en TradeLog y, si es real/testnet, aviso push.
    ============================================================ */
-import { db } from '@/lib/db';
+import { db, dbInfo } from '@/lib/db';
 import { marketOrder, tickerPrice, getCreds, type Creds } from './exchange';
 import { getSignal, type Signal } from './analysis';
 import { pushAll } from './push';
+
+/* v018 — Candado de concurrencia por símbolo.
+   El cron (runTradingTick), los ticks perezosos de cada mensaje de WhatsApp
+   y una orden manual pueden evaluar el MISMO símbolo casi al mismo tiempo.
+   Sin esto, dos evaluaciones simultáneas pueden leer "sin posición abierta"
+   o "3 operaciones esta hora" ANTES de que la primera registre su operación,
+   y ambas pasan las reglas de riesgo: se abren más posiciones de las que
+   configuraste, o se cierra dos veces la misma posición.
+   pg_advisory_xact_lock serializa por símbolo: la segunda evaluación espera
+   a que la primera termine (commit) y entonces vuelve a leer el estado ya
+   actualizado. En SQLite (solo desarrollo local) no hace falta: una sola
+   conexión ya serializa las operaciones. */
+async function withSymbolLock<T>(symbol: string, fn: () => Promise<T>): Promise<T> {
+  if (dbInfo.dialect !== 'postgres') return fn();
+  return db.$transaction(
+    async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${symbol}))`;
+      return fn();
+    },
+    { timeout: 30000, maxWait: 30000 }
+  );
+}
 
 export interface TradingCfg {
   id: string; on: boolean; simMode: boolean; symbols: string;
@@ -160,29 +182,35 @@ export async function evaluateSymbol(symbolRaw: string, opts: { manual?: boolean
   const price = await tickerPrice(symbol);
   if (!price) return { executed: false, detail: `No pude obtener el precio de ${symbol} ahora mismo` };
 
-  // 1) Gestionar posiciones abiertas: stop-loss y take-profit SIEMPRE primero
-  const open = await db.tradeLog.findFirst({ where: { symbol, side: 'BUY', status: 'open', mode }, orderBy: { createdAt: 'asc' } });
-  if (open) {
-    const sl = open.price * (1 - cfg.stopLossPct / 100);
-    const tp = open.price * (1 + cfg.takeProfitPct / 100);
-    if (price <= sl) return closePosition(symbol, price, mode, cfg, creds, 'stop-loss');
-    if (price >= tp) return closePosition(symbol, price, mode, cfg, creds, 'take-profit');
-  }
+  // v018 — todo lo que lee/escribe el estado de la posición (SL/TP, señal,
+  // apertura/cierre) queda bajo el candado del símbolo: una segunda
+  // evaluación concurrente del mismo símbolo espera aquí en vez de actuar
+  // sobre datos ya obsoletos.
+  return withSymbolLock(symbol, async () => {
+    // 1) Gestionar posiciones abiertas: stop-loss y take-profit SIEMPRE primero
+    const open = await db.tradeLog.findFirst({ where: { symbol, side: 'BUY', status: 'open', mode }, orderBy: { createdAt: 'asc' } });
+    if (open) {
+      const sl = open.price * (1 - cfg.stopLossPct / 100);
+      const tp = open.price * (1 + cfg.takeProfitPct / 100);
+      if (price <= sl) return closePosition(symbol, price, mode, cfg, creds, 'stop-loss');
+      if (price >= tp) return closePosition(symbol, price, mode, cfg, creds, 'take-profit');
+    }
 
-  // 2) Señal técnica
-  const sig = await getSignal(symbol);
-  if (!sig) return { executed: false, detail: `Sin señal disponible para ${symbol} (sin conexión con el mercado)` };
-  const sigLine = `${symbol}: ${sig.action.toUpperCase()} (score ${sig.score}, confianza ${sig.confidence}%) · precio ${price}`;
+    // 2) Señal técnica
+    const sig = await getSignal(symbol);
+    if (!sig) return { executed: false, detail: `Sin señal disponible para ${symbol} (sin conexión con el mercado)` };
+    const sigLine = `${symbol}: ${sig.action.toUpperCase()} (score ${sig.score}, confianza ${sig.confidence}%) · precio ${price}`;
 
-  if (sig.action === 'comprar' && !open) {
-    const r = await openPosition(symbol, price, sig, mode, cfg, creds, 'señal');
-    return { executed: r.executed, detail: `${sigLine}\n${r.detail}` };
-  }
-  if (sig.action === 'vender' && open) {
-    const r = await closePosition(symbol, price, mode, cfg, creds, 'señal de venta');
-    return { executed: r.executed, detail: `${sigLine}\n${r.detail}` };
-  }
-  return { executed: false, detail: `${sigLine} · sin acción (${open ? 'ya hay posición abierta' : 'la señal no alcanza el umbral'})` };
+    if (sig.action === 'comprar' && !open) {
+      const r = await openPosition(symbol, price, sig, mode, cfg, creds, 'señal');
+      return { executed: r.executed, detail: `${sigLine}\n${r.detail}` };
+    }
+    if (sig.action === 'vender' && open) {
+      const r = await closePosition(symbol, price, mode, cfg, creds, 'señal de venta');
+      return { executed: r.executed, detail: `${sigLine}\n${r.detail}` };
+    }
+    return { executed: false, detail: `${sigLine} · sin acción (${open ? 'ya hay posición abierta' : 'la señal no alcanza el umbral'})` };
+  });
 }
 
 /** Orden manual desde WhatsApp o el panel (solo sim/testnet por seguridad) */
@@ -197,12 +225,14 @@ export async function manualOrder(symbolRaw: string, side: 'BUY' | 'SELL'): Prom
   const creds = mode === 'testnet' ? await getCreds() : null;
   const price = await tickerPrice(symbol);
   if (!price) return { executed: false, detail: `Sin precio de ${symbol} ahora mismo` };
-  if (side === 'BUY') {
-    const open = await db.tradeLog.findFirst({ where: { symbol, side: 'BUY', status: 'open', mode } });
-    if (open) return { executed: false, detail: `Ya hay una posición abierta en ${symbol}` };
-    return openPosition(symbol, price, null, mode, cfg, creds, 'manual');
-  }
-  return closePosition(symbol, price, mode, cfg, creds, 'manual');
+  return withSymbolLock(symbol, async () => {
+    if (side === 'BUY') {
+      const open = await db.tradeLog.findFirst({ where: { symbol, side: 'BUY', status: 'open', mode } });
+      if (open) return { executed: false, detail: `Ya hay una posición abierta en ${symbol}` };
+      return openPosition(symbol, price, null, mode, cfg, creds, 'manual');
+    }
+    return closePosition(symbol, price, mode, cfg, creds, 'manual');
+  });
 }
 
 /** Ciclo del cron: evalúa todos los símbolos vigilados */
