@@ -9,7 +9,7 @@ const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-display", 
 export const metadata: Metadata = {
   title: "NOVA — Agente WhatsApp + Cripto",
   description:
-    "NOVA v015: agente inteligente para WhatsApp (API oficial, gratis y sin riesgo) con cripto en datos reales, control por voz de tu tienda, trading automatizado en modo simulación, modo offline con comandos locales, cerebro neuronal en vivo, CSV y avisos push. Listo para GitHub + Vercel (todo dentro de Vercel: base de datos integrada, cron nativo y modo offline).",
+    "NOVA v017: agente inteligente para WhatsApp (API oficial, gratis y sin riesgo) con cripto en datos reales, control por voz de tu tienda, trading automatizado en modo simulación, modo offline con comandos locales, cerebro neuronal en vivo, CSV y avisos push. Listo para GitHub + Vercel (todo dentro de Vercel: base de datos integrada, cron nativo y modo offline).",
   applicationName: "NOVA",
   manifest: "/manifest.webmanifest",
   appleWebApp: {

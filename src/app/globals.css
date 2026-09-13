@@ -474,6 +474,7 @@ linear-gradient(145deg,rgba(7,21,39,.92),rgba(2,9,19,.92))}
   .nova-app .dbwarn{padding:11px 13px;gap:10px;border-radius:12px;margin-bottom:11px}
   .nova-app .dbwarn b{font-size:12px}
   .nova-app .dbwarn span{font-size:10.5px}
+  .nova-app .dbwarn-btn{font-size:10.5px;padding:4px 11px;margin-top:7px}
   .nova-app .sidebar{position:fixed;left:10px;right:10px;width:auto;height:auto;bottom:calc(10px + env(safe-area-inset-bottom));top:auto;border-right:0;border-top:1px solid var(--line);border-radius:26px;padding:7px 5px;overflow:visible}
   .nova-app .brand,.nova-app .profile{display:none}
   .nova-app .nav{display:flex;justify-content:space-around;gap:2px}
@@ -554,6 +555,9 @@ linear-gradient(145deg,rgba(7,21,39,.92),rgba(2,9,19,.92))}
 .nova-app .dbwarn b{display:block;font-size:13px;letter-spacing:.2px;margin-bottom:3px;color:#ffe4b8}
 .nova-app .dbwarn span{display:block;font-size:11.5px;line-height:1.55;color:rgba(255,224,180,.88)}
 .nova-app .dbwarn span b{display:inline;font-size:inherit;margin:0;color:#ffe9c4}
+.nova-app .dbwarn-btn{margin-top:9px;border:1px solid rgba(255,196,100,.5);background:rgba(255,190,80,.14);color:#ffe4b8;font:inherit;font-size:11px;font-weight:700;letter-spacing:.3px;padding:5px 13px;border-radius:999px;cursor:pointer;transition:background .15s ease,transform .1s ease}
+.nova-app .dbwarn-btn:hover{background:rgba(255,190,80,.28)}
+.nova-app .dbwarn-btn:active{transform:scale(.97)}
 @keyframes nvfadein{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 
 
@@ -594,6 +598,8 @@ html[data-theme="light"] .nova-app .dbwarn svg{color:#a86e08;filter:none}
 html[data-theme="light"] .nova-app .dbwarn b{color:#4a3305}
 html[data-theme="light"] .nova-app .dbwarn span{color:#6f5420}
 html[data-theme="light"] .nova-app .dbwarn span b{color:#4a3305}
+html[data-theme="light"] .nova-app .dbwarn-btn{border-color:rgba(178,116,10,.4);background:rgba(255,255,255,.55);color:#4a3305}
+html[data-theme="light"] .nova-app .dbwarn-btn:hover{background:rgba(255,255,255,.85)}
 
 /* ---- sidebar / nav / perfil / barra superior ---- */
 html[data-theme="light"] .nova-app .sidebar{background:rgba(255,255,255,.90);border-right:1px solid rgba(20,24,34,.08);box-shadow:0 12px 34px rgba(24,28,45,.10)}

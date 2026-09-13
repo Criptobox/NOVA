@@ -1,16 +1,19 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, ensureDb, dbInfo } from '@/lib/db';
 import { NOVA_VERSION } from '@/components/nova/SwRegister';
 
 export const dynamic = 'force-dynamic';
 
-/* v015 — Diagnóstico de la base de datos con causa exacta.
-   El panel lo consulta al abrir y cada 60 s y ajusta el aviso:
-   · reason 'no_url'  → DATABASE_URL no llega a este despliegue (base sin conectar al proyecto)
-   · reason 'bad_url' → DATABASE_URL existe pero es inválida (comillas / formato)
-   · reason 'refused' → existe pero no responde (creada hace segundos, espera/Redeploy)
-   · reason 'tables'  → BD conectada y responde, pero faltan tablas → falta Redeploy
-   Nunca se expone el valor de DATABASE_URL, solo si está presente. */
+/* v016 — Diagnóstico de la base de datos con causa exacta + AUTOCURACIÓN.
+   Si la BD responde pero faltan tablas, se crean AQUÍ MISMO (DDL idempotente):
+   ya no dependen del build de Vercel → basta abrir el panel.
+   reason:
+   · ok      → todo listo (autoFix=true si las tablas se crearon en esta llamada)
+   · no_url  → Vercel no pasó NINGUNA variable de conexión al despliegue
+   · bad_url → la URL existe pero es inválida (comillas/formato/autenticación)
+   · refused → la URL existe pero el servidor no responde (o BD inexistente)
+   · tables  → BD responde pero las tablas no se pudieron crear (permisos)
+   Nunca se exponen valores: solo el NOMBRE de la variable y el host. */
 
 type Reason = 'ok' | 'no_url' | 'bad_url' | 'refused' | 'tables';
 
@@ -25,12 +28,22 @@ function classify(e: unknown): Reason {
 }
 
 export async function GET() {
-  const urlSet = !!process.env.DATABASE_URL;
+  const info = dbInfo;
   let up = false;
   let tables = false;
-  let reason: Reason = 'no_url';
-  if (!urlSet) {
+  let autoFix = false;
+  let reason: Reason = 'refused';
+
+  if (info.dialect === 'none') {
     reason = 'no_url';
+  } else if (info.dialect === 'sqlite') {
+    // Desarrollo local con SQLite: mismo chequeo, sin DDL
+    try {
+      await db.$queryRaw`SELECT 1 FROM "Setting" LIMIT 1`;
+      up = true; tables = true; reason = 'ok';
+    } catch (e) {
+      reason = classify(e);
+    }
   } else {
     try {
       await db.$queryRaw`SELECT 1`;
@@ -44,12 +57,32 @@ export async function GET() {
         tables = true;
         reason = 'ok';
       } catch {
-        reason = 'tables';
+        // v016 — autocuración: crear tablas al vuelo y volver a comprobar
+        const r = await ensureDb(true);
+        if (r.ok) {
+          try {
+            await db.$queryRaw`SELECT 1 FROM "Setting" LIMIT 1`;
+            tables = true; autoFix = true; reason = 'ok';
+          } catch { reason = 'tables'; }
+        } else {
+          reason = 'tables';
+        }
       }
     }
   }
+
   return NextResponse.json(
-    { ok: true, db: up, tables, url: urlSet ? 'set' : 'missing', reason, version: NOVA_VERSION },
+    {
+      ok: true,
+      db: up,
+      tables,
+      autoFix,
+      url: info.dialect === 'none' ? 'missing' : 'set',
+      envVar: info.urlVar,
+      host: info.host,
+      reason,
+      version: NOVA_VERSION,
+    },
     { headers: { 'Cache-Control': 'no-store' } },
   );
 }

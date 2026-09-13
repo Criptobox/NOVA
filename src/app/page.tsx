@@ -50,7 +50,7 @@ export default function NovaDashboard() {
   const [online, setOnline] = useState(true);
   const [pendientes, setPendientes] = useState(0);
   const [dbOk, setDbOk] = useState<boolean | null>(null); // v014: null = comprobando
-  const [health, setHealth] = useState<{ db: boolean; tables: boolean; reason: string } | null>(null); // v015
+  const [health, setHealth] = useState<{ db: boolean; tables: boolean; reason: string; envVar?: string | null; host?: string | null } | null>(null); // v016
   const escalRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -83,15 +83,17 @@ export default function NovaDashboard() {
 
   useEffect(() => { void loadStats(); const t = setInterval(() => void loadStats(), 60000); return () => clearInterval(t); }, [loadStats]);
 
-  /* v015 — Diagnóstico con causa exacta: no_url / bad_url / refused / tables */
+  /* v016 — Diagnóstico con causa exacta + autocuración + botón Reintentar.
+     no_url / bad_url / refused / tables — el servidor crea las tablas solo. */
+  const chequearSalud = useCallback(() => fetch('/api/health', { cache: 'no-store' })
+    .then(r => r.json()).then(h => { setHealth(h); setDbOk(!!h?.db && !!h?.tables); })
+    .catch(() => { setDbOk(false); setHealth({ db: false, tables: false, reason: 'refused' }); }), []);
+
   useEffect(() => {
-    const check = () => fetch('/api/health', { cache: 'no-store' })
-      .then(r => r.json()).then(h => { setHealth(h); setDbOk(!!h?.db && !!h?.tables); })
-      .catch(() => { setDbOk(false); setHealth({ db: false, tables: false, reason: 'refused' }); });
-    check();
-    const t = setInterval(check, 60000);
+    void chequearSalud();
+    const t = setInterval(() => void chequearSalud(), 60000);
     return () => clearInterval(t);
-  }, []);
+  }, [chequearSalud]);
 
   /* v010 — MODO OFFLINE: indicador + sincronización de la outbox al reconectar */
   useEffect(() => {
@@ -221,13 +223,13 @@ export default function NovaDashboard() {
               <div>
                 {health.reason === 'tables' ? (
                   <>
-                    <b>Base de datos conectada ✓ — falta un último paso</b>
-                    <span>La BD responde pero las tablas aún no existen (se crean SOLO durante el build). Ve a Vercel → <b>Deployments</b> → el último → <b>⋯ → Redeploy</b> y espera a que termine. Después este aviso desaparece solo. También puedes pegar <b>setup.sql</b> en Storage → tu base → pestaña Query → Run.</span>
+                    <b>Base de datos conectada ✓ — falta crear las tablas</b>
+                    <span>La BD ya responde, pero NOVA no pudo crear las tablas automáticamente. Reintenta en un minuto (botón de abajo); si sigue igual, pega el archivo <b>setup.sql</b> en Vercel → Storage → tu base → pestaña <b>Query</b> → Run (es idempotente, puedes pegarlo dos veces).</span>
                   </>
                 ) : health.reason === 'bad_url' ? (
                   <>
                     <b>Base de datos: la URL existe pero NO es válida</b>
-                    <span>En Vercel → <b>Settings → Environment Variables</b> revisa <b>DATABASE_URL</b>: NO debe tener comillas, espacios ni saltos de línea, y debe estar marcada para <b>Production, Preview y Development</b>. Guarda y haz <b>Redeploy</b> (Deployments → ⋯ → Redeploy).</span>
+                    <span>En Vercel → <b>Settings → Environment Variables</b> revisa la variable de la base (DATABASE_URL o POSTGRES_URL): NO debe tener comillas, espacios ni saltos de línea, y debe estar marcada para <b>Production, Preview y Development</b>. Guarda y haz <b>Redeploy</b> (Deployments → ⋯ → Redeploy).</span>
                   </>
                 ) : health.reason === 'refused' ? (
                   <>
@@ -237,9 +239,12 @@ export default function NovaDashboard() {
                 ) : (
                   <>
                     <b>Base de datos no conectada</b>
-                    <span>Ahora mismo los apartados quedan vacíos y no se guarda nada. En Vercel: pestaña <b>Storage</b> → tu base de Postgres → botón <b>Connect Project</b> (marca Production, Preview y Development) → <b>Redeploy</b> en Deployments. Las tablas se crean solas al redesplegar. Es el paso 4 de la DEPLOY-GUIA.</span>
+                    <span>Ahora mismo los apartados quedan vacíos y no se guarda nada. Vercel no pasó ninguna variable de conexión al despliegue. En Vercel: pestaña <b>Storage</b> → tu base de Postgres → botón <b>Connect Project</b> (marca Production, Preview y Development) → <b>Redeploy</b> en Deployments. Al abrir el panel, las tablas se crean solas — sin pasos extra. Es el paso 4 de la DEPLOY-GUIA.</span>
                   </>
                 )}
+                <button type="button" className="dbwarn-btn" onClick={() => void chequearSalud()}>
+                  Reintentar ahora
+                </button>
               </div>
             </div>
           )}
