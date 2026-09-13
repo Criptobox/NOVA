@@ -1,10 +1,10 @@
 -- ============================================================
--- NOVA v015 — setup.sql (PostgreSQL · PLAN B opcional)
--- Normalmente NO hace falta: el build de Vercel crea las tablas
--- solo (prisma db push) al conectar Vercel Postgres y redesplegar.
--- PLAN B: pega TODO este archivo en Storage → tu base → pestaña
--- Query → Run. Es idempotente: puedes pegarlo dos veces sin romper
--- nada (CREATE TABLE IF NOT EXISTS).
+-- NOVA v017 — setup.sql (PostgreSQL · PLAN B opcional)
+-- Normalmente NO hace falta: al abrir el panel, NOVA crea las
+-- tablas sola (autocuración en runtime, sin db push en el build).
+-- Si algún día el aviso ámbar lo pide: pega TODO este archivo en
+-- Storage → tu base → pestaña Query → Run. Es idempotente: puedes
+-- pegarlo dos veces sin romper nada (CREATE TABLE IF NOT EXISTS).
 -- Crea TODAS las tablas: conversaciones, cripto, tienda (TiendaMax),
 -- trading automatizado y sniper.
 -- ============================================================
@@ -246,5 +246,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS "ShopProduct_extId_key" ON "ShopProduct"("extI
 CREATE UNIQUE INDEX IF NOT EXISTS "SniperWatch_symbol_key" ON "SniperWatch"("symbol");
 
 -- AddForeignKey
-ALTER TABLE "Message" ADD CONSTRAINT "Message_contactId_fkey" FOREIGN KEY ("contactId") REFERENCES "Contact"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $NovaFk$
+BEGIN
+    ALTER TABLE "Message" ADD CONSTRAINT "Message_contactId_fkey" FOREIGN KEY ("contactId") REFERENCES "Contact"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL; END
+$NovaFk$;
 

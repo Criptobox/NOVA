@@ -1,13 +1,13 @@
 {
   "name": "nova-agent",
-  "version": "0.15.0",
+  "version": "0.17.0",
   "engines": {
     "node": ">=20.9.0"
   },
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
-    "build": "prisma generate && (PUSH_URL=\"${DATABASE_URL_UNPOOLED:-${DIRECT_URL:-$DATABASE_URL}}\"; if [ -z \"$PUSH_URL\" ]; then echo \"AVISO NOVA: DATABASE_URL no llega a este build → Vercel → Storage → tu base → Connect Project (Production+Preview+Development) → Redeploy. La banda ámbar del panel se apagará al conectar\"; elif ! DATABASE_URL=\"$PUSH_URL\" prisma db push --skip-generate; then echo \"AVISO NOVA: la base está configurada pero prisma db push falló → revisa que DATABASE_URL no tenga comillas/espacios y haz Redeploy\"; fi) && next build",
+    "build": "prisma generate && next build",
     "start": "next start -p 3000",
     "postinstall": "prisma generate",
     "lint": "eslint .",

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOVA — Agente de WhatsApp + Cripto (página de cortesía)</title>
+<meta name="description" content="NOVA es una app Next.js (PWA). Esta página es solo de cortesía: el panel real se despliega en Vercel.">
+<style>
+  :root{
+    --bg:#070a12; --card:rgba(255,255,255,.045); --borde:rgba(255,255,255,.09);
+    --texto:#e8ecf6; --suave:#93a0b8; --acento:#4f8cff; --ok:#2dd4a7;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    min-height:100vh; background:var(--bg); color:var(--texto);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex; align-items:center; justify-content:center; padding:28px 18px;
+  }
+  .wrap{width:100%;max-width:860px}
+  header{display:flex;align-items:center;gap:18px;margin-bottom:26px}
+  .esfera{
+    width:74px;height:74px;border-radius:50%;flex:none;
+    background:
+      radial-gradient(circle at 34% 27%, #cfe0ff 0%, #7ea6ff 28%, #3d6ef0 55%, #1c3aa9 80%, #12245f 100%);
+    box-shadow:0 0 42px rgba(79,140,255,.45), inset 0 -8px 22px rgba(0,0,0,.35);
+  }
+  h1{font-size:30px;letter-spacing:.5px}
+  h1 span{color:var(--acento)}
+  .sub{color:var(--suave);font-size:14px;margin-top:4px}
+  .aviso{
+    background:rgba(79,140,255,.10); border:1px solid rgba(79,140,255,.35);
+    border-radius:14px; padding:14px 16px; font-size:14px; line-height:1.55; margin-bottom:20px;
+  }
+  .aviso b{color:#a9c6ff}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  .card{
+    background:var(--card); border:1px solid var(--borde); border-radius:16px; padding:18px;
+  }
+  .card h2{font-size:15px;margin-bottom:8px;color:#cfe0ff}
+  .card p{font-size:13.5px;line-height:1.6;color:var(--suave)}
+  .card ol{margin:8px 0 0 18px;font-size:13.5px;line-height:1.7;color:var(--suave)}
+  .btn{
+    display:inline-block;margin-top:18px;background:linear-gradient(135deg,#4f8cff,#2f5fd6);
+    color:#fff;text-decoration:none;font-weight:600;font-size:14.5px;
+    padding:12px 22px;border-radius:12px;box-shadow:0 6px 18px rgba(47,95,214,.35);
+  }
+  .pie{margin-top:22px;font-size:12px;color:#5b6880;text-align:center}
+  @media (max-width:520px){ h1{font-size:24px} .esfera{width:58px;height:58px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="esfera" aria-hidden="true"></div>
+    <div>
+      <h1>NOVA <span>·</span> Agente de WhatsApp + Cripto</h1>
+      <div class="sub">Página de cortesía · el panel real es una app Next.js (PWA)</div>
+    </div>
+  </header>
+
+  <div class="aviso">
+    <b>¿Por qué el sandbox dice que «no hay página HTML»?</b><br>
+    Porque NOVA no es una web estática: es una aplicación <b>Next.js</b> con
+    servidor, base de datos y APIs. Los «enlaces rotos» que señala
+    (<i>tailwindcss</i>, <i>tw-animate-css</i>) son <b>imports de paquetes npm</b>
+    que se resuelven al compilar — no archivos del proyecto. El único lugar que
+    la ejecuta de verdad es <b>Vercel</b>.
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Despliegue (solo GitHub + Vercel)</h2>
+      <ol>
+        <li>Sube TODOS los archivos del zip al repo de GitHub.</li>
+        <li>Vercel → Import Project → el repo.</li>
+        <li>Vercel → Storage → Create Database → Postgres → <b>Connect Project</b>.</li>
+        <li>Redeploy y abre el panel: las tablas se crean solas.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h2>Qué incluye la app</h2>
+      <p>Agente de WhatsApp (API oficial gratis), cripto en datos reales,
+      control por voz de la tienda, trading en simulación, modo offline,
+      push, CSV y panel claro/oscuro — todo dentro de Vercel.</p>
+    </div>
+  </div>
+
+  <a class="btn" href="./">Abrir el panel (/)</a>
+  <div class="pie">NOVA v017 · Licencia MIT · GitHub + Vercel</div>
+</div>
+</body>
+</html>

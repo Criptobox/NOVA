@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "buildCommand": "prisma generate && (PUSH_URL=\"${DATABASE_URL_UNPOOLED:-${DIRECT_URL:-$DATABASE_URL}}\"; if [ -z \"$PUSH_URL\" ]; then echo 'AVISO NOVA: DATABASE_URL no llega a este build → Storage → tu base → Connect Project → Redeploy'; elif ! DATABASE_URL=\"$PUSH_URL\" prisma db push --skip-generate; then echo 'AVISO NOVA: base configurada pero db push falló → revisa comillas en DATABASE_URL y haz Redeploy'; fi) && next build",
+  "buildCommand": "prisma generate && next build",
   "crons": [
     { "path": "/api/cron/tick", "schedule": "0 0 * * *" }
   ]

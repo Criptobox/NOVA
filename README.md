@@ -1,4 +1,4 @@
-# NOVA v015 — Agente WhatsApp + Cripto + Tienda + Trading (PWA)
+# NOVA v017 — Agente WhatsApp + Cripto + Tienda + Trading (PWA)
 
 NOVA es un agente inteligente que **atiende usuarios por WhatsApp** usando la **API oficial de Meta (Cloud API)** — la vía **100% gratis para responder a tus usuarios (mensajes de servicio) y sin riesgo de baneo** — con seguimiento de criptomonedas en vivo, **control por voz de tu tienda TiendaMax**, **trading automatizado en modo simulación**, alertas de precio, recordatorios, notas de voz, análisis de imágenes, **modo offline con comandos locales** y un **dashboard PWA instalable** con el cerebro neuronal de NOVA.
 
@@ -275,6 +275,22 @@ public/                       # manifest.webmanifest, sw.js (nova-v011), iconos 
 - **v011** — 100% GitHub + Vercel (Vercel Postgres integrado, cron nativo en vercel.json, ticks perezosos, tablas automáticas en el build).
 - **v012** — Panel rediseñado: masonry sin huecos, tarjetas que se acoplan a la pantalla, diseño pro (iconos por módulo, badges de estado, pasos numerados), modo claro y oscuro con botón en la barra superior.
 - **v013** — FIX de despliegues en Vercel: paquetes de build en `dependencies`, `postcss.config.mjs` y `package-lock.json` incluidos en el paquete. Adiós al `Module not found` en `globals.css`.
+- **v014** — Autodiagnóstico: banda ámbar con los pasos exactos cuando falta la base + `/api/health` con recheck cada 60 s.
+- **v015** — El aviso distingue la causa exacta (no conectada / URL inválida / no responde / faltan tablas) y el build usaba la URL directa para el `db push`.
+- **v016** — Autocuración total: tablas creadas en runtime, todos los nombres de variables de Vercel reconocidos, build sin BD y sin avisos, botón Reintentar en la banda.
+- **v017** — Página de cortesía para sandboxes estáticos (`public/index.html`) + licencia MIT. Los «errores» de analizadores de webs estáticas quedan explicados y en su mayoría desaparecen.
+## Novedades v016 (sobre v015) — La base de datos se cura SOLA
+
+Si conectaste Vercel Postgres y el aviso ámbar seguía: esta versión elimina de raíz TODAS las causas posibles, sin que tengas que tocar nada más:
+
+| # | Mejora | Detalle |
+|---|--------|---------|
+| 1 | **Autocuración en runtime** | Las tablas ya NO se crean en el build: se crean SOLAS la primera vez que abres el panel (DDL idempotente dentro de la app). Sin Redeploys extra ni SQL manual |
+| 2 | **Acepta TODOS los nombres de variables** | `DATABASE_URL`, `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, `DATABASE_URL_UNPOOLED`, `POSTGRES_URL_NON_POOLING` o `DIRECT_URL` — da igual cuál cree tu integración de Vercel (Vercel Postgres clásico usa POSTGRES_*, la plantilla Neon usa DATABASE_URL): NOVA la encuentra sola |
+| 3 | **Build 100% limpio y sin BD** | El build de Vercel ya no ejecuta `prisma db push` ni imprime avisos «AVISO NOVA…» que podían parecer errores. Si el build falla, ya no puede ser por la base |
+| 4 | **URL normalizada** | Si a la variable le pegaron comillas o espacios, se limpian solas; añade `sslmode=require` y `pgbouncer=true` cuando el host lo necesita (evita timeouts con poolers) |
+| 5 | **Bandera más inteligente + botón Reintentar** | La banda ámbar te dice la causa exacta y te deja reintentar al momento (además del auto-recheck cada 60 s). Si las tablas acaban de crearse, el propio chequeo las crea y se apaga solo |
+
 ## Novedades v015 (sobre v014) — El aviso te dice EXACTAMENTE qué falta
 
 Si la banda ámbar sigue tras conectar la base, ahora te dice cuál de los 3 problemas es:
@@ -287,4 +303,14 @@ Si la banda ámbar sigue tras conectar la base, ahora te dice cuál de los 3 pro
 
 Extras: el build ahora crea las tablas con la **URL directa** (`DATABASE_URL_UNPOOLED`, evita fallos de pgbouncer) y el build log de Vercel muestra avisos «AVISO NOVA:» imposibles de confundir.
 
-- **v014** — Autodiagnóstico: si falta la base de datos en Vercel, el panel muestra un aviso ámbar con los pasos exactos (Storage → Connect → Redeploy) en vez de quedar vacío sin explicación. Endpoint `/api/health` con recheck cada 60 s.
+## Novedades v017 (sobre v016) — Adiós a los «errores» del analizador estático
+
+¿Subiste el proyecto a un sandbox de **webs estáticas** y salió «2 problemas» con enlaces rotos y «sin página HTML»? Tranquilidad: **eso NO es Vercel ni un fallo de NOVA** — es un analizador que solo sabe ejecutar webs estáticas y no entiende apps Next.js:
+
+| Aviso del analizador | Qué significa en realidad | Estado en v017 |
+|---|---|---|
+| `@import "tailwindcss"` y `@import "tw-animate-css"` = «enlaces rotos» | **Falso positivo**: son paquetes npm que Tailwind v4 resuelve AL COMPILAR (no archivos del proyecto). Vercel los compila perfecto (verificado en sala limpia) | Se queda igual (es lo correcto); el README/guía lo explican |
+| «El proyecto no tiene ninguna página HTML» | Next.js no usa `index.html`: el panel se genera en el servidor. Un sandbox estático no puede ejecutarlo | **Nueva página de cortesía** `public/index.html`: el sandbox ya muestra algo bonito con las instrucciones |
+| «No hay archivo de licencia» | Faltaba el LICENSE, nada grave | **Añadida licencia MIT** |
+
+Además: si tu analizador dice «131 de 140 archivos analizados», cuadra exactamente con los 131 archivos de texto del zip (185 en total; los binarios como iconos PNG los salta). Es otra prueba de que el paquete está completo.

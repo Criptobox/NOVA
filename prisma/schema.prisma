@@ -1,7 +1,7 @@
-// NOVA v015 — Esquema PostgreSQL para Vercel Postgres (pestaña Storage de Vercel).
-// Las tablas se crean SOLOS en el build (prisma db push). Plan B: pegar setup.sql
-// en la pestaña Query de la base de datos. Incluye trading (TradingConfig,
-// ExchangeCredentials, TradeLog, SniperWatch).
+// NOVA v017 — Esquema PostgreSQL para Vercel Postgres (pestaña Storage de Vercel).
+// Las tablas se crean SOLAS al primer uso (autocuración en runtime, sin db push
+// en el build). Plan B: pegar setup.sql en la pestaña Query de la base de datos.
+// Incluye trading (TradingConfig, ExchangeCredentials, TradeLog, SniperWatch).
 // Agente WhatsApp + seguimiento cripto + tienda + trading automatizado
 
 generator client {

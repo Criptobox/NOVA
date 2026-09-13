@@ -1,4 +1,4 @@
-# 🚀 NOVA v015 — Despliegue SOLO con GitHub + Vercel (todo gratis)
+# 🚀 NOVA v017 — Despliegue SOLO con GitHub + Vercel (todo gratis)
 
 > Esta guía usa **ÚNICAMENTE GitHub y Vercel**. GitHub guarda el código; Vercel ejecuta la aplicación **y también la base de datos** (Vercel Postgres, que se crea desde el propio panel de Vercel). No necesitas crear cuenta en ningún otro sitio. El modo offline de la PWA va incluido.
 
@@ -14,6 +14,16 @@
 | Tareas programadas | **Vercel Cron** (incluido, ya configurado en `vercel.json`) + **ticks perezosos** | Barrido diario automático + ejecución de tareas con cada mensaje de WhatsApp y cada refresco del panel | Gratis |
 
 ⚠️ **Importante**: NO lo subas a **GitHub Pages** — Pages solo sirve archivos estáticos y NOVA es una aplicación de servidor (por eso antes veías el README/v002). Con **Vercel** sí corre todo.
+
+🧪 **¿Un analizador de webs estáticas te muestra «2 problemas»?** (enlaces rotos en `tailwindcss` / `tw-animate-css`, «no hay página HTML», «sin licencia»): es **normal y NO es un error de Vercel**. Esa herramienta solo ejecuta webs estáticas y no entiende apps Next.js:
+
+| Aviso | Reality check |
+|-------|---------------|
+| «Enlaces rotos» en globals.css | Los `@import "tailwindcss"` / `"tw-animate-css"` son **paquetes npm** que se resuelven al compilar; Vercel los compila sin problema |
+| «No hay ninguna página HTML» | Next.js genera las páginas en el servidor (no usa `index.html`). Desde v017 se incluye `public/index.html` de cortesía para que ese tipo de sandbox muestre instrucciones |
+| «Sin archivo de licencia» | Desde v017 se incluye `LICENSE` (MIT) |
+
+El único validador que importa: el log del deploy en **Vercel → Deployments → clic en el deploy**. Si dice "Ready", está bien; si falla, copia el texto exacto del error.
 
 💡 **Honestidad sobre los recordatorios**: en el plan gratis, el cron interno de Vercel hace un barrido **1 vez al día**. Por eso NOVA además ejecuta las tareas vencidas **con cada mensaje de WhatsApp que recibe** y **con cada refresco del panel** (cada 60 s mientras lo tienes abierto). En la práctica: si usas NOVA, todo sale al momento. Si quieres que un recordatorio de las "14:32" llegue a las 14:32 exactas con el panel cerrado y sin mensajes entrantes, puedes añadir un cron externo gratis (opcional) — **Paso 7**.
 
@@ -42,8 +52,8 @@
 1. En tu proyecto de Vercel: pestaña **Storage** → **Create Database** → **Postgres (Neon)** → nombre `nova` → **Create & Continue**.
 2. Cuando te ofrezca **Connect Project**, selecciona tu proyecto `nova-agent` y conecta — Vercel añade `DATABASE_URL` automáticamente (no se toca a mano).
 3. Ve a **Deployments** → en el último deploy pulsa **⋯ → Redeploy** → confirm.
-4. En este segundo deploy, el build ejecuta `prisma db push` y **crea las 13 tablas solas** (conversaciones, cripto, tienda TiendaMax y las 4 del trading). Ya no hay que pegar SQL.
-   - **Plan B** (si prefieres crearlas a mano): Storage → tu base → pestaña **Query** → pega el contenido completo de `setup.sql` → **Run**. Es idempotente (lo puedes pegar dos veces sin romper nada).
+4. **No hay que crear las tablas a mano**: al abrir el panel, NOVA las crea SOLAS en la base (autocuración en runtime) — conversaciones, cripto, tienda TiendaMax y las 4 del trading. El Redeploy del paso 3 solo sirve para que las variables de la base lleguen al despliegue.
+   - **Plan B** (solo si algún día el aviso ámbar lo pide): Storage → tu base → pestaña **Query** → pega el contenido completo de `setup.sql` → **Run**. Es idempotente (lo puedes pegar dos veces sin romper nada).
 
 ## 5) Variables de entorno (2 min)
 
@@ -57,7 +67,7 @@ Project → **Settings → Environment Variables**. Añade SIN comillas (valen p
 | `WHATSAPP_PHONE_ID` | Opcional aquí (o desde el panel: Ajustes) |
 | `WHATSAPP_VERIFY_TOKEN` | Opcional aquí (o desde el panel: Ajustes) |
 
-> `DATABASE_URL` NO se añade a mano: la creó Vercel Postgres en el Paso 4.
+> `DATABASE_URL` NO se añade a mano: la creó Vercel Postgres en el Paso 4. Y si tu integración la llamó distinto (`POSTGRES_URL`, `POSTGRES_PRISMA_URL`, `DATABASE_URL_UNPOOLED`…), da igual: NOVA la reconoce TODAS solas.
 
 → Después de guardarlas, haz **Redeploy** (Deployments → ⋯ → Redeploy) para que se apliquen.
 
@@ -92,10 +102,10 @@ Solo si quieres que recordatorios/alertas salgan a la hora exacta **aunque no us
 
 | Síntoma | Causa y solución |
 |---------|------------------|
-| El panel abre con una banda ámbar «Base de datos no conectada» y apartados vacíos | La banda ahora te dice la causa exacta: (1) «no conectada» → falta el Paso 4: Storage → tu base → **Connect Project** (marca los 3 entornos) → **Redeploy**; (2) «la URL existe pero NO es válida» → Settings → Environment Variables → quita comillas/espacios de DATABASE_URL y marca los 3 entornos → Redeploy; (3) «conectada ✓ falta un último paso» → solo **Redeploy** para crear las tablas. La banda se apaga sola al resolverlo |
+| El panel abre con una banda ámbar «Base de datos no conectada» y apartados vacíos | La banda ahora te dice la causa exacta y tiene botón **Reintentar ahora**: (1) «no conectada» → falta el Paso 4: Storage → tu base → **Connect Project** (marca los 3 entornos) → **Redeploy**; (2) «la URL existe pero NO es válida» → Settings → Environment Variables → quita comillas/espacios y marca los 3 entornos → Redeploy; (3) «conectada ✓ falta crear las tablas» → espera/Reintentar (NOVA las crea sola al abrir) y, si insistiera, pega `setup.sql` en la pestaña Query. La banda se apaga sola al resolverlo |
 | Build falla: `Module not found ... ./src/app/globals.css` (o `tw-animate-css`) | Tu repo tiene archivos de una versión antigua. Sube **TODOS** los archivos de este zip reemplazando los anteriores (clave: `package.json`, `package-lock.json`, `postcss.config.mjs`) y **Redeploy**. Si en Vercel → Settings → Environment Variables existe `NODE_ENV=production`, puedes dejarla: esta versión instala los paquetes de build igualmente |
-| Build falla: "Environment variable not found: DATABASE_URL" | Falta el Paso 4: crea el Postgres en Storage, conéctalo al proyecto y **Redeploy** |
-| La app abre pero las APIs dan error 500 | Faltan las tablas: repite el Paso 4 (Redeploy) o pega `setup.sql` en la pestaña Query |
+| En el log del build ya NO aparece nada de la base de datos | Es NORMAL desde v016: el build ya no toca la base (antes podía imprimir avisos «AVISO NOVA» que parecían errores). Las tablas se crean al abrir el panel |
+| La app abre pero las APIs dan error 500 | Ya no debería pasar: al abrir el panel las tablas se crean solas. Si lo ves, espera 30 s y recarga (botón **Reintentar** de la banda ámbar) o pega `setup.sql` en la pestaña Query |
 | No llegan recordatorios a la hora exacta | Normal en el plan gratis si nadie abre nada: añade el Paso 7 (opcional) |
 | El webhook de Meta da error de verificación | `WHATSAPP_VERIFY_TOKEN` debe ser IDÉNTICO en Meta y en Vercel/panel |
 | Sigo viendo el README o "v002" | Estás abriendo GitHub Pages — usa `https://TU-APP.vercel.app` |
