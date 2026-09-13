@@ -50,6 +50,7 @@ export default function NovaDashboard() {
   const [online, setOnline] = useState(true);
   const [pendientes, setPendientes] = useState(0);
   const [dbOk, setDbOk] = useState<boolean | null>(null); // v014: null = comprobando
+  const [health, setHealth] = useState<{ db: boolean; tables: boolean; reason: string } | null>(null); // v015
   const escalRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -82,12 +83,11 @@ export default function NovaDashboard() {
 
   useEffect(() => { void loadStats(); const t = setInterval(() => void loadStats(), 60000); return () => clearInterval(t); }, [loadStats]);
 
-  /* v014 — Diagnóstico de base de datos: si Vercel Postgres aún no está creada/
-     conectada, se muestra un aviso con los pasos exactos en vez de dejar los
-     apartados vacíos sin explicación. Se reintenta cada 60 s automáticamente. */
+  /* v015 — Diagnóstico con causa exacta: no_url / bad_url / refused / tables */
   useEffect(() => {
     const check = () => fetch('/api/health', { cache: 'no-store' })
-      .then(r => r.json()).then(h => setDbOk(!!h?.db)).catch(() => setDbOk(false));
+      .then(r => r.json()).then(h => { setHealth(h); setDbOk(!!h?.db && !!h?.tables); })
+      .catch(() => { setDbOk(false); setHealth({ db: false, tables: false, reason: 'refused' }); });
     check();
     const t = setInterval(check, 60000);
     return () => clearInterval(t);
@@ -214,13 +214,32 @@ export default function NovaDashboard() {
             </div>
           </header>
 
-          {/* v014 — Aviso de base de datos no conectada (se muestra en TODAS las vistas) */}
-          {dbOk === false && (
+          {/* v015 — Aviso de BD con causa exacta (en TODAS las vistas) */}
+          {dbOk === false && health && (
             <div className="dbwarn" role="alert">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
               <div>
-                <b>Base de datos no conectada</b>
-                <span>Ahora mismo los apartados quedan vacíos y no se guarda nada. En Vercel: pestaña <b>Storage</b> → <b>Create Database → Postgres</b> → <b>Connect Project</b> → <b>Redeploy</b> (las tablas se crean solas al redesplegar). Es el paso 4 de la DEPLOY-GUIA. Se reconecta solo cada 60 s.</span>
+                {health.reason === 'tables' ? (
+                  <>
+                    <b>Base de datos conectada ✓ — falta un último paso</b>
+                    <span>La BD responde pero las tablas aún no existen (se crean SOLO durante el build). Ve a Vercel → <b>Deployments</b> → el último → <b>⋯ → Redeploy</b> y espera a que termine. Después este aviso desaparece solo. También puedes pegar <b>setup.sql</b> en Storage → tu base → pestaña Query → Run.</span>
+                  </>
+                ) : health.reason === 'bad_url' ? (
+                  <>
+                    <b>Base de datos: la URL existe pero NO es válida</b>
+                    <span>En Vercel → <b>Settings → Environment Variables</b> revisa <b>DATABASE_URL</b>: NO debe tener comillas, espacios ni saltos de línea, y debe estar marcada para <b>Production, Preview y Development</b>. Guarda y haz <b>Redeploy</b> (Deployments → ⋯ → Redeploy).</span>
+                  </>
+                ) : health.reason === 'refused' ? (
+                  <>
+                    <b>Base de datos configurada pero aún no responde</b>
+                    <span>Si acabas de crearla, espera 1 minuto (este aviso se reintenta solo cada 60 s). Si sigue igual: Vercel → <b>Storage</b> → tu base → verifica que el proyecto esté conectado (<b>Connect Project</b>) y haz <b>Redeploy</b> en Deployments.</span>
+                  </>
+                ) : (
+                  <>
+                    <b>Base de datos no conectada</b>
+                    <span>Ahora mismo los apartados quedan vacíos y no se guarda nada. En Vercel: pestaña <b>Storage</b> → tu base de Postgres → botón <b>Connect Project</b> (marca Production, Preview y Development) → <b>Redeploy</b> en Deployments. Las tablas se crean solas al redesplegar. Es el paso 4 de la DEPLOY-GUIA.</span>
+                  </>
+                )}
               </div>
             </div>
           )}
