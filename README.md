@@ -1,6 +1,20 @@
-# NOVA v017 — Agente WhatsApp + Cripto + Tienda + Trading (PWA)
+# NOVA v018 — Agente WhatsApp + Cripto + Tienda + Trading (PWA)
 
 NOVA es un agente inteligente que **atiende usuarios por WhatsApp** usando la **API oficial de Meta (Cloud API)** — la vía **100% gratis para responder a tus usuarios (mensajes de servicio) y sin riesgo de baneo** — con seguimiento de criptomonedas en vivo, **control por voz de tu tienda TiendaMax**, **trading automatizado en modo simulación**, alertas de precio, recordatorios, notas de voz, análisis de imágenes, **modo offline con comandos locales** y un **dashboard PWA instalable** con el cerebro neuronal de NOVA.
+
+## Novedades v018 (sobre v017) — Seguridad: el panel ya no está abierto a cualquiera
+
+Una auditoría de seguridad encontró que **todo el panel y su API estaban completamente abiertos**: cualquiera con la URL del despliegue podía leer conversaciones reales, activar trading con dinero real, escribir en el inventario de la tienda o suplantar al dueño enviando un webhook falso. La v018 lo cierra:
+
+| # | Corrección | Detalle |
+|---|-----------|----------|
+| 1 | **Panel protegido por contraseña** | Nueva variable `ADMIN_PASSWORD`: si la defines, todo el panel y su API piden contraseña (cookie de sesión firmada, 30 días) antes de dejar entrar. Sin ella, NOVA sigue funcionando igual que antes pero muestra un aviso permanente invitando a configurarla |
+| 2 | **Webhooks de WhatsApp verificados por firma** | Nuevo campo *App Secret* (Ajustes → Conexión WhatsApp): NOVA verifica la cabecera `X-Hub-Signature-256` que Meta añade a cada evento real. Sin esto, cualquiera podía enviar un POST fabricado a mano haciéndose pasar por el número del dueño y disparar compras, ventas o cambios de stock |
+| 3 | **Secretos ya no viajan en claro** | `GET /api/settings` devolvía el token de WhatsApp, el token de GitHub y la clave privada de Web Push completos en la respuesta. Ahora se enmascaran (o, en el caso de la clave privada de Push, ya no se envían nunca) |
+| 4 | **Clave de cifrado sin respaldo débil** | Las API keys del exchange se cifraban con una clave conocida y visible en este mismo código si `NOVA_CRYPT_KEY` no estaba configurada. Ahora, sin esa variable, NOVA rechaza guardar credenciales del exchange en vez de cifrarlas con una clave insegura |
+| 5 | **Comparaciones a prueba de temporización** | El `CRON_SECRET` y el verify token del webhook se comparaban con `===`, medible por temporización. Ahora usan comparación en tiempo constante |
+
+**Qué hacer si ya tenías NOVA desplegado:** añade `ADMIN_PASSWORD` (una contraseña fuerte) en Vercel → Settings → Environment Variables y haz Redeploy — a partir de ahí el panel te pedirá esa contraseña. Si usas WhatsApp real, pega también el **App Secret** de tu app de Meta en Ajustes → Conexión WhatsApp para que NOVA verifique que los mensajes vienen de verdad de Meta. Si guardaste credenciales del exchange (Binance) sin tener `NOVA_CRYPT_KEY` configurada, vuelve a pegarlas una vez que la variable esté puesta.
 
 ## Novedades v014 (sobre v013) — El panel te avisa si falta la base de datos
 
@@ -279,6 +293,7 @@ public/                       # manifest.webmanifest, sw.js (nova-v011), iconos 
 - **v015** — El aviso distingue la causa exacta (no conectada / URL inválida / no responde / faltan tablas) y el build usaba la URL directa para el `db push`.
 - **v016** — Autocuración total: tablas creadas en runtime, todos los nombres de variables de Vercel reconocidos, build sin BD y sin avisos, botón Reintentar en la banda.
 - **v017** — Página de cortesía para sandboxes estáticos (`public/index.html`) + licencia MIT. Los «errores» de analizadores de webs estáticas quedan explicados y en su mayoría desaparecen.
+- **v018** — Seguridad: panel protegido por contraseña (`ADMIN_PASSWORD`), verificación de firma en los webhooks de WhatsApp (App Secret), secretos ya no viajan en claro por la API, sin clave de cifrado de respaldo débil, comparaciones a prueba de temporización.
 ## Novedades v016 (sobre v015) — La base de datos se cura SOLA
 
 Si conectaste Vercel Postgres y el aviso ámbar seguía: esta versión elimina de raíz TODAS las causas posibles, sin que tengas que tocar nada más:

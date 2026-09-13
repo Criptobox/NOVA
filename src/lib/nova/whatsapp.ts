@@ -5,6 +5,7 @@
    · Botones y listas interactivas (gratis en la ventana 24 h)
    · Sin credenciales configuradas → MODO SIMULADOR
    ============================================================ */
+import crypto from 'node:crypto';
 import { waCreds, type NovaSettings } from './settings';
 
 export type WaMode = 'live' | 'simulador';
@@ -119,6 +120,32 @@ export function verifyWebhook(query: URLSearchParams, s: NovaSettings): string |
   const mode = query.get('hub.mode');
   const token = query.get('hub.verify_token');
   const challenge = query.get('hub.challenge');
-  if (mode === 'subscribe' && token && token === verifyToken) return challenge;
+  if (mode === 'subscribe' && token && timingSafeEq(token, verifyToken)) return challenge;
   return null;
+}
+
+function timingSafeEq(a: string, b: string): boolean {
+  const ba = Buffer.from(a);
+  const bb = Buffer.from(b);
+  if (ba.length !== bb.length) return false;
+  return crypto.timingSafeEqual(ba, bb);
+}
+
+/* v018 — Verifica la firma HMAC-SHA256 (cabecera X-Hub-Signature-256) que Meta
+   añade a CADA POST del webhook, firmada con el App Secret de la app de Meta.
+   Sin esto, cualquiera puede mandar un POST fabricado a mano suplantando al
+   dueño (mismo número que ownerWa) y disparar comandos reales de trading o
+   tienda. Si no hay App Secret configurado, no se puede verificar — se avisa
+   por consola pero se deja pasar por compatibilidad con instalaciones que
+   aún no lo configuraron (ver Ajustes → Conexión WhatsApp). */
+export function verifyWebhookSignature(rawBody: string, header: string | null, s: NovaSettings): { ok: boolean; reason?: string } {
+  const { appSecret } = waCreds(s);
+  if (!appSecret) return { ok: true, reason: 'sin App Secret configurado (firma no verificada)' };
+  if (!header || !header.startsWith('sha256=')) return { ok: false, reason: 'falta la cabecera de firma' };
+  const expected = crypto.createHmac('sha256', appSecret).update(rawBody, 'utf8').digest('hex');
+  const got = header.slice('sha256='.length);
+  const a = Buffer.from(expected, 'hex');
+  const b = Buffer.from(got, 'hex');
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return { ok: false, reason: 'firma inválida' };
+  return { ok: true };
 }

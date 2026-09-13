@@ -61,11 +61,13 @@ Project → **Settings → Environment Variables**. Añade SIN comillas (valen p
 
 | Variable | Valor |
 |----------|-------|
+| `ADMIN_PASSWORD` | **Muy recomendada (v018)** — una contraseña fuerte. Sin ella, cualquiera con tu URL de Vercel puede abrir el panel, leer conversaciones y operar el trading real. Con ella, el panel pide esta contraseña antes de dejar entrar |
 | `CRON_SECRET` | **Recomendada** — inventa una frase larga única. El Cron de Vercel la usa automáticamente (cabecera Bearer) y así solo tú puedes llamar al cron |
-| `NOVA_CRYPT_KEY` | **Recomendada** — otra frase larga. Cifra con AES-256-GCM las API keys del exchange |
+| `NOVA_CRYPT_KEY` | **Obligatoria para usar trading real/testnet (v018)** — otra frase larga. Cifra con AES-256-GCM las API keys del exchange; sin ella NOVA ya no guarda esas credenciales (antes usaba una clave de reserva insegura) |
 | `WHATSAPP_TOKEN` | Opcional aquí (o desde el panel: Ajustes) |
 | `WHATSAPP_PHONE_ID` | Opcional aquí (o desde el panel: Ajustes) |
 | `WHATSAPP_VERIFY_TOKEN` | Opcional aquí (o desde el panel: Ajustes) |
+| `WHATSAPP_APP_SECRET` | **Recomendada si usas WhatsApp real (v018)** — App Secret de tu app de Meta (o pégalo en Ajustes → Conexión WhatsApp). Sin esto, NOVA no puede comprobar que los mensajes entrantes vienen de verdad de Meta |
 
 > `DATABASE_URL` NO se añade a mano: la creó Vercel Postgres en el Paso 4. Y si tu integración la llamó distinto (`POSTGRES_URL`, `POSTGRES_PRISMA_URL`, `DATABASE_URL_UNPOOLED`…), da igual: NOVA la reconoce TODAS solas.
 
@@ -76,6 +78,7 @@ Project → **Settings → Environment Variables**. Añade SIN comillas (valen p
 1. Abre tu panel: `https://TU-APP.vercel.app` → **Ajustes** → pega `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_ID` y `WHATSAPP_VERIFY_TOKEN` (o déjalos en las variables de entorno).
 2. En Meta for Developers → WhatsApp → **Configuration** → Callback URL: `https://TU-APP.vercel.app/api/webhook/whatsapp` · Verify token: el mismo `WHATSAPP_VERIFY_TOKEN` → **Verify and save**.
 3. Suscribe el campo **messages**. Envía un mensaje de prueba a tu número → NOVA responde solo.
+4. **Recomendado (v018)**: en Meta for Developers → tu app → **Configuración básica**, copia el **App Secret** y pégalo en el panel → Ajustes → Conexión WhatsApp → App Secret. Así NOVA verifica la firma de cada evento y nadie puede enviar un webhook falso haciéndose pasar por ti.
 
 ## 7) OPCIONAL — recordatorios con precisión de minuto
 

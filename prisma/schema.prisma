@@ -92,6 +92,7 @@ model Setting {
   waToken          String   @default("")
   waPhoneId        String   @default("")
   waVerifyToken    String   @default("nova-verify")
+  waAppSecret      String   @default("") // v018: App Secret de Meta — firma HMAC de los webhooks entrantes (anti-suplantación)
   vapidPub         String   @default("") // v006: clave pública Web Push (avisos al dueño)
   vapidPriv        String   @default("") // v006: clave privada Web Push
   ghUser           String   @default("") // v007: GitHub usuario dueño del repo de la tienda

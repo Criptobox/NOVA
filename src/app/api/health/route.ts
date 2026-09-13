@@ -82,6 +82,7 @@ export async function GET() {
       host: info.host,
       reason,
       version: NOVA_VERSION,
+      adminProtected: !!process.env.ADMIN_PASSWORD, // v018: ¿el panel exige contraseña?
     },
     { headers: { 'Cache-Control': 'no-store' } },
   );

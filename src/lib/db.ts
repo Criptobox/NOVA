@@ -10,7 +10,7 @@
 //   Vercel ya NO toca la base de datos y el log de deploy queda limpio.
 // · Siembra los ajustes base (Setting «nova» + TradingConfig «trading»).
 import { PrismaClient } from '@prisma/client'
-import { NOVA_DDL, NOVA_SEED } from './ddl'
+import { NOVA_DDL, NOVA_SEED, NOVA_DDL_ALWAYS } from './ddl'
 
 export type DbInfo = {
   dialect: 'postgres' | 'sqlite' | 'none'
@@ -159,6 +159,15 @@ export async function ensureDb(force = false): Promise<EnsureRes> {
             return { ok: false, error: m.slice(0, 200) }
           }
         }
+      }
+    }
+    // v018 — migraciones aditivas: corren siempre (tabla nueva o ya existente)
+    // para que una instalación viva reciba columnas nuevas sin perder datos.
+    for (const sql of NOVA_DDL_ALWAYS) {
+      try {
+        await plain.$executeRawUnsafe(sql)
+      } catch (e) {
+        console.error('[NOVA ddl] migración aditiva falló:', String((e as Error)?.message || e).slice(0, 200))
       }
     }
     globalForPrisma.novaListo = true

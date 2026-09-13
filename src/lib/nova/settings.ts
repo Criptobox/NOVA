@@ -17,6 +17,7 @@ export interface NovaSettings {
   waToken: string;
   waPhoneId: string;
   waVerifyToken: string;
+  waAppSecret: string;
   vapidPub: string;
   vapidPriv: string;
   ghUser: string;
@@ -41,6 +42,7 @@ export function waCreds(s: NovaSettings) {
     token: process.env.WHATSAPP_TOKEN || s.waToken || '',
     phoneId: process.env.WHATSAPP_PHONE_ID || s.waPhoneId || '',
     verifyToken: process.env.WHATSAPP_VERIFY_TOKEN || s.waVerifyToken || 'nova-verify',
+    appSecret: process.env.WHATSAPP_APP_SECRET || s.waAppSecret || '',
   };
 }
 

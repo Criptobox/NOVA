@@ -1,19 +1,24 @@
 /* ============================================================
-   NOVA v010 — Cifrado de secretos (AES-256-GCM)
+   NOVA v018 — Cifrado de secretos (AES-256-GCM)
    Cifra las API keys del exchange en la base de datos:
    nunca se guardan en claro y nunca salen al frontend.
-   La clave se deriva de NOVA_CRYPT_KEY (o CRON_SECRET de reserva)
-   con SHA-256 → 32 bytes. En dev usa una clave local conocida.
+   La clave se deriva de NOVA_CRYPT_KEY con SHA-256 → 32 bytes.
+   Sin NOVA_CRYPT_KEY configurada NO hay clave de reserva conocida:
+   se lanza un error (fail-closed) para no cifrar secretos reales
+   del exchange con una clave que cualquiera puede leer en este
+   código fuente público.
    ============================================================ */
 import crypto from 'node:crypto';
 
 const ALGO = 'aes-256-gcm';
 
 function key(): Buffer {
-  const base =
-    process.env.NOVA_CRYPT_KEY ||
-    process.env.CRON_SECRET ||
-    'nova-v010-local-dev-key';
+  const base = process.env.NOVA_CRYPT_KEY;
+  if (!base) {
+    throw new Error(
+      'NOVA_CRYPT_KEY no está configurada: añádela en las variables de entorno antes de guardar credenciales del exchange (Ajustes → Trading). Sin ella NOVA no puede cifrar tus API keys de forma segura.'
+    );
+  }
   return crypto.createHash('sha256').update(base).digest();
 }
 

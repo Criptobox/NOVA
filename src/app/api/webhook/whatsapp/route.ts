@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse, after } from 'next/server';
 import { getSettings } from '@/lib/nova/settings';
-import { verifyWebhook, waMode } from '@/lib/nova/whatsapp';
+import { verifyWebhook, verifyWebhookSignature, waMode } from '@/lib/nova/whatsapp';
 import { processWaWebhookValue } from '@/lib/nova/engine';
 import { startScheduler } from '@/lib/nova/scheduler';
 import { lazyTickRun } from '@/lib/nova/lazyTick';
@@ -23,8 +23,14 @@ export async function GET(req: NextRequest) {
 /* Eventos entrantes de WhatsApp Cloud API */
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const raw = await req.text();
     const s = await getSettings();
+    const sig = verifyWebhookSignature(raw, req.headers.get('x-hub-signature-256'), s);
+    if (!sig.ok) {
+      console.error('[NOVA webhook] firma rechazada:', sig.reason);
+      return NextResponse.json({ ok: false, error: 'firma inválida' }, { status: 401 });
+    }
+    const body = JSON.parse(raw);
     if (waMode(s) !== 'live') {
       return NextResponse.json({ ok: false, error: 'NOVA está en modo simulador. Configura el token y el phone_id en Ajustes.' }, { status: 503 });
     }

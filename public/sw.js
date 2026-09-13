@@ -1,4 +1,4 @@
-/* NOVA v016 — Service Worker
+/* NOVA v018 — Service Worker
    · Precaché del shell (PWA instalable y arranque instantáneo)
    · Navegación: network-first con fallback a caché (arranque offline)
    · API: network-only (datos siempre frescos; el modo offline lo
@@ -6,7 +6,7 @@
    · Estáticos: cache-first + revalidación
    · Auto-actualización: skipWaiting + claim → el cliente recarga solo
    · Web Push: notificaciones al pedir humano + clic para abrir Conversaciones */
-const VERSION = 'nova-v017';
+const VERSION = 'nova-v018';
 const CORE = [
   '/',
   '/manifest.webmanifest',

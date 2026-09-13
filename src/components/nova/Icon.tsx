@@ -7,7 +7,7 @@ import type { CSSProperties } from 'react';
 export type IconName =
   | 'home' | 'brain' | 'chat' | 'coins' | 'chart' | 'clock' | 'gear'
   | 'download' | 'bell' | 'bellOn' | 'user' | 'shield' | 'bolt' | 'check'
-  | 'box' | 'cart' | 'refresh' | 'plus' | 'minus' | 'sun' | 'moon';
+  | 'box' | 'cart' | 'refresh' | 'plus' | 'minus' | 'sun' | 'moon' | 'lock';
 
 const PATHS: Record<IconName, React.ReactNode> = {
   home: <path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1v-8.5Z" />,
@@ -84,6 +84,12 @@ const PATHS: Record<IconName, React.ReactNode> = {
     </>
   ),
   moon: <path d="M20 13.2A7.6 7.6 0 0 1 10.8 4a7.6 7.6 0 1 0 9.2 9.2Z" />,
+  lock: (
+    <>
+      <rect x="5" y="11" width="14" height="9" rx="2" />
+      <path d="M8 11V7.5a4 4 0 0 1 8 0V11" />
+    </>
+  ),
 };
 
 export function Icon({ name, size = 18, style, className }: {

@@ -9,12 +9,12 @@ interface Settings {
   persona: string; mode247: boolean; startHour: number; endHour: number;
   maxMsgsPerMin: number; ownerWa: string; aiEnabled: boolean;
   dailySummaryOn: boolean; dailySummaryHour: number;
-  waToken: string; waPhoneId: string; waVerifyToken: string;
+  waToken: string; waPhoneId: string; waVerifyToken: string; waAppSecret: string;
   ghUser: string; ghRepo: string; ghBranch: string; ghPath: string; ghSite: string; ghToken: string;
   shopSim: boolean; lowStock: number;
 }
 interface Status {
-  mode: string; tokenSet: boolean; phoneIdSet: boolean; verifyToken: string;
+  mode: string; tokenSet: boolean; phoneIdSet: boolean; verifyToken: string; sigVerified: boolean;
   scheduler: { running: boolean; mode: string };
 }
 
@@ -79,9 +79,14 @@ export function SettingsView() {
               <input value={s.waVerifyToken} onChange={e => setS({ ...s, waVerifyToken: e.target.value })} /></div>
             <div className="field"><label>Número del dueño (formato internacional, ej. 5215500000000)</label>
               <input value={s.ownerWa} onChange={e => setS({ ...s, ownerWa: e.target.value })} placeholder="521…" /></div>
+            <div className="field" style={{ gridColumn: '1 / -1' }}><label>App Secret (Meta → Configuración básica) — firma y verifica cada webhook entrante</label>
+              <input value={s.waAppSecret} onChange={e => setS({ ...s, waAppSecret: e.target.value })} placeholder="pégalo aquí para bloquear webhooks falsos" type="password" /></div>
           </div>
           <button className="button green" style={{ width: '100%' }} onClick={() => void put(s)}>Guardar credenciales</button>
           {saved && <div style={{ marginTop: 8 }}><span className="tag">{saved}</span></div>}
+          {st && (st.sigVerified
+            ? <div style={{ marginTop: 8 }}><span className="tag">✓ Webhooks verificados por firma</span></div>
+            : <div style={{ marginTop: 8 }}><span className="tag yellow">⚠ Sin App Secret: cualquiera podría enviar webhooks falsos a esta URL. Pégalo arriba para cerrar ese hueco.</span></div>)}
 
           <div style={{ marginTop: 14, padding: '12px 14px', border: '1px solid var(--line)', borderRadius: 13, background: 'var(--soft)', fontSize: 11, lineHeight: 1.8 }}>
             <b style={{ fontSize: 12 }}>Cómo activar el modo en vivo (gratis, sin riesgo):</b><br />

@@ -50,7 +50,7 @@ export default function NovaDashboard() {
   const [online, setOnline] = useState(true);
   const [pendientes, setPendientes] = useState(0);
   const [dbOk, setDbOk] = useState<boolean | null>(null); // v014: null = comprobando
-  const [health, setHealth] = useState<{ db: boolean; tables: boolean; reason: string; envVar?: string | null; host?: string | null } | null>(null); // v016
+  const [health, setHealth] = useState<{ db: boolean; tables: boolean; reason: string; envVar?: string | null; host?: string | null; adminProtected?: boolean } | null>(null); // v016
   const escalRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -213,6 +213,16 @@ export default function NovaDashboard() {
                 Planificador activo
               </span>
               <SwRegister />
+              {health?.adminProtected && (
+                <button
+                  className="iconbtn"
+                  title="Cerrar sesión"
+                  aria-label="Cerrar sesión"
+                  onClick={async () => { await fetch('/api/auth/logout', { method: 'POST' }); window.location.href = '/login'; }}
+                >
+                  <Icon name="lock" size={16} />
+                </button>
+              )}
             </div>
           </header>
 
@@ -245,6 +255,19 @@ export default function NovaDashboard() {
                 <button type="button" className="dbwarn-btn" onClick={() => void chequearSalud()}>
                   Reintentar ahora
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* v018 — Aviso permanente si el panel no exige contraseña: cualquiera
+              con esta URL puede leer conversaciones, operar trading real o
+              escribir en la tienda. Desaparece solo al configurar ADMIN_PASSWORD. */}
+          {health && health.adminProtected === false && (
+            <div className="dbwarn" role="alert">
+              <Icon name="shield" size={20} />
+              <div>
+                <b>Panel sin contraseña: cualquiera con esta URL puede usarlo</b>
+                <span>Falta la variable <b>ADMIN_PASSWORD</b>. En Vercel: <b>Settings → Environment Variables</b> → añade <b>ADMIN_PASSWORD</b> con una contraseña fuerte (marca Production, Preview y Development) → <b>Redeploy</b>. A partir de ahí el panel pedirá esa contraseña para entrar.</span>
               </div>
             </div>
           )}

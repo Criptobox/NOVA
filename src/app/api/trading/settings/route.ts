@@ -84,6 +84,9 @@ export async function POST(req: NextRequest) {
     });
   } catch (e) {
     console.error('[NOVA trading/settings]', e);
-    return NextResponse.json({ ok: false, error: 'no se pudieron guardar los ajustes' }, { status: 500 });
+    const msg = e instanceof Error && e.message.includes('NOVA_CRYPT_KEY')
+      ? e.message
+      : 'no se pudieron guardar los ajustes';
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
 }

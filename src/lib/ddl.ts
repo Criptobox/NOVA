@@ -33,3 +33,12 @@ export const NOVA_SEED: string[] = [
   "INSERT INTO \"Setting\" (\"id\", \"updatedAt\") VALUES ('nova', NOW()) ON CONFLICT (\"id\") DO NOTHING;",
   "INSERT INTO \"TradingConfig\" (\"id\", \"updatedAt\") VALUES ('trading', NOW()) ON CONFLICT (\"id\") DO NOTHING;"
 ];
+
+/* v018 — Migraciones aditivas (ALTER TABLE ... ADD COLUMN IF NOT EXISTS).
+   A diferencia de NOVA_DDL (que solo corre si la tabla NO existía aún),
+   estas sentencias se ejecutan SIEMPRE que la BD responde, aunque las
+   tablas ya existan de un despliegue anterior — así una instalación viva
+   recibe columnas nuevas sin perder datos ni requerir SQL manual. */
+export const NOVA_DDL_ALWAYS: string[] = [
+  "ALTER TABLE \"Setting\" ADD COLUMN IF NOT EXISTS \"waAppSecret\" TEXT NOT NULL DEFAULT '';"
+];
