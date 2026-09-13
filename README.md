@@ -1,4 +1,4 @@
-# NOVA v014 — Agente WhatsApp + Cripto + Tienda + Trading (PWA)
+# NOVA v015 — Agente WhatsApp + Cripto + Tienda + Trading (PWA)
 
 NOVA es un agente inteligente que **atiende usuarios por WhatsApp** usando la **API oficial de Meta (Cloud API)** — la vía **100% gratis para responder a tus usuarios (mensajes de servicio) y sin riesgo de baneo** — con seguimiento de criptomonedas en vivo, **control por voz de tu tienda TiendaMax**, **trading automatizado en modo simulación**, alertas de precio, recordatorios, notas de voz, análisis de imágenes, **modo offline con comandos locales** y un **dashboard PWA instalable** con el cerebro neuronal de NOVA.
 
@@ -275,4 +275,16 @@ public/                       # manifest.webmanifest, sw.js (nova-v011), iconos 
 - **v011** — 100% GitHub + Vercel (Vercel Postgres integrado, cron nativo en vercel.json, ticks perezosos, tablas automáticas en el build).
 - **v012** — Panel rediseñado: masonry sin huecos, tarjetas que se acoplan a la pantalla, diseño pro (iconos por módulo, badges de estado, pasos numerados), modo claro y oscuro con botón en la barra superior.
 - **v013** — FIX de despliegues en Vercel: paquetes de build en `dependencies`, `postcss.config.mjs` y `package-lock.json` incluidos en el paquete. Adiós al `Module not found` en `globals.css`.
-- **v014** (esta) — Autodiagnóstico: si falta la base de datos en Vercel, el panel muestra un aviso ámbar con los pasos exactos (Storage → Connect → Redeploy) en vez de quedar vacío sin explicación. Endpoint `/api/health` con recheck cada 60 s.
+## Novedades v015 (sobre v014) — El aviso te dice EXACTAMENTE qué falta
+
+Si la banda ámbar sigue tras conectar la base, ahora te dice cuál de los 3 problemas es:
+
+| Causa que detecta | Qué te dice el panel | Solución |
+|---|---|---|
+| La base NO está conectada al proyecto (no llega `DATABASE_URL`) | «Base de datos no conectada» | Storage → tu base → **Connect Project** (marca Production + Preview + Development) → **Redeploy** |
+| La URL existe pero es inválida (comillas, espacios o mal formato) | «La URL existe pero NO es válida» | Settings → Environment Variables → quita comillas/espacios, marca los 3 entornos → Save → **Redeploy** |
+| BD conectada pero faltan las tablas | «Base de datos conectada ✓ — falta un último paso» | Deployments → **Redeploy** (las tablas se crean en el build) o pega `setup.sql` en la pestaña Query |
+
+Extras: el build ahora crea las tablas con la **URL directa** (`DATABASE_URL_UNPOOLED`, evita fallos de pgbouncer) y el build log de Vercel muestra avisos «AVISO NOVA:» imposibles de confundir.
+
+- **v014** — Autodiagnóstico: si falta la base de datos en Vercel, el panel muestra un aviso ámbar con los pasos exactos (Storage → Connect → Redeploy) en vez de quedar vacío sin explicación. Endpoint `/api/health` con recheck cada 60 s.
